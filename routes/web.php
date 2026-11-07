@@ -1,6 +1,8 @@
 <?php
 
+use App\Livewire\Public\BookingWizard;
 use App\Livewire\Public\ClinicLanding;
+use App\Livewire\Public\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -18,6 +20,7 @@ use App\Models\Appointment;
 
 // Halaman Utama / Landing Page
 Route::get('/', ClinicLanding::class)->name('index');
+Route::get('/wizard-booking', BookingWizard::class)->name('booking-wizard');
 
 // Halaman Form Login
 Route::get('/login', function () {
@@ -28,6 +31,20 @@ Route::get('/login', function () {
 Route::get('/register', function () {
     return view('auth.register');
 })->name('register')->middleware('guest');
+
+
+// Halaman Settings User
+Route::middleware(['auth'])->group(function () {
+    Route::get('/settings', Settings::class)->name('settings');
+});
+
+// Logout
+Route::post('/logout', function (Request $request) {
+    auth()->logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+    return redirect('/');
+})->name('logout');
 
 /*
 |--------------------------------------------------------------------------

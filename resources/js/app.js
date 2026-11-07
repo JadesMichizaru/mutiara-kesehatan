@@ -837,3 +837,67 @@ function initScrollTop() {
  * - Gunakan backend server sebagai proxy untuk API calls
  * - Implementasi rate limiting untuk mencegah penyalahgunaan
  */
+
+// ============================================
+// 10. Navbar JS
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    // --- DESKTOP USER DROPDOWN ---
+    const dropdownContainer = document.getElementById('userDropdownContainer');
+    const dropdownBtn = document.getElementById('userDropdownBtn');
+
+    if (dropdownContainer && dropdownBtn) {
+        dropdownBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            dropdownContainer.classList.toggle('active');
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!dropdownContainer.contains(e.target)) {
+                dropdownContainer.classList.remove('active');
+            }
+        });
+    }
+
+    // --- MOBILE DRAWER TOGGLE ---
+    const mobileToggle = document.getElementById('mobileToggle');
+    const mobileDrawer = document.getElementById('mobileDrawer');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const drawerCloseBtn = document.getElementById('drawerCloseBtn');
+
+    function openMobileMenu() {
+        mobileDrawer.classList.add('active');
+        mobileOverlay.classList.add('active');
+        mobileToggle.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Kunci scroll halaman
+    }
+
+    function closeMobileMenu() {
+        mobileDrawer.classList.remove('active');
+        mobileOverlay.classList.remove('active');
+        mobileToggle.classList.remove('active');
+        document.body.style.overflow = ''; // Lepas kunci scroll
+    }
+
+    if (mobileToggle && mobileDrawer && mobileOverlay) {
+        mobileToggle.addEventListener('click', function() {
+            if (mobileDrawer.classList.contains('active')) {
+                closeMobileMenu();
+            } else {
+                openMobileMenu();
+            }
+        });
+
+        mobileOverlay.addEventListener('click', closeMobileMenu);
+        if (drawerCloseBtn) {
+            drawerCloseBtn.addEventListener('click', closeMobileMenu);
+        }
+
+        // Tutup drawer otomatis saat link diklik
+        const mobileLinks = document.querySelectorAll('.mobile-nav-item');
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', closeMobileMenu);
+        });
+    }
+});

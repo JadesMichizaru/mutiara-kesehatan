@@ -14,7 +14,6 @@
             let text = textInput || this.userText;
             if (!text || text.trim() === '') return;
 
-            // 1. Tambah Pesan User
             let timeNow = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             this.chatMessages.push({
                 sender: 'user',
@@ -24,13 +23,11 @@
 
             if (!textInput) this.userText = '';
 
-            // Auto Scroll ke Bawah
             this.$nextTick(() => {
                 let chatArea = document.getElementById('chatMessagesArea');
                 if (chatArea) chatArea.scrollTop = chatArea.scrollHeight;
             });
 
-            // 2. Logic Auto-Reply Pure JS
             setTimeout(() => {
                 let reply = this.getBotReply(text.toLowerCase());
                 this.chatMessages.push({
@@ -62,8 +59,8 @@
     ">
 
     <!-- ================= HEADER / NAVBAR ================= -->
-    <header class="header" id="header">
-        <!-- Top Bar - Info Kontak & Jam Operasional -->
+    <header class="header" id="header" data-aos="fade-down" data-aos-duration="600">
+        <!-- Top Bar -->
         <div class="top-bar">
             <div class="container">
                 <div class="top-bar-content">
@@ -97,7 +94,7 @@
                     </a>
 
                     <!-- Desktop Navigation Menu -->
-                    <ul class="nav-menu" id="navMenu">
+                    <ul class="nav-menu desktop-only" id="navMenu">
                         <li><a href="#beranda" class="nav-link active">Beranda</a></li>
                         <li><a href="#layanan" class="nav-link">Layanan</a></li>
                         <li><a href="#dokter" class="nav-link">Dokter</a></li>
@@ -106,16 +103,60 @@
 
                     <!-- CTA Button & Mobile Toggle -->
                     <div class="nav-actions">
-                        <a href="/login" class="btn btn-outline btn-sm" style="border-radius: var(--radius-full); padding: 0.5rem 1.2rem;">
-                            <i class="fas fa-sign-in-alt"></i> <span>Masuk</span>
+                        @auth
+                            <div class="user-dropdown-container desktop-only" id="userDropdownContainer">
+                                <button type="button" class="user-dropdown-btn" id="userDropdownBtn">
+                                    <div class="user-avatar-sm">
+                                        {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                                        <span class="online-indicator"></span>
+                                    </div>
+                                    <span class="user-name-text">{{ auth()->user()->name }}</span>
+                                    <i class="fas fa-chevron-down chevron-icon"></i>
+                                </button>
+
+                                <div class="user-dropdown-menu" id="userDropdownMenu">
+                                    <div class="dropdown-user-header">
+                                        <div class="user-avatar-lg">
+                                            {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                                        </div>
+                                        <div class="user-header-info">
+                                            <p class="user-header-name">{{ auth()->user()->name }}</p>
+                                            <p class="user-header-email">{{ auth()->user()->email ?? 'Pasien Terdaftar' }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="dropdown-divider"></div>
+                                    <ul class="dropdown-links">
+                                        <li>
+                                            <a href="{{ route('settings') }}" class="dropdown-item">
+                                                <div class="item-icon teal"><i class="fas fa-cog"></i></div>
+                                                <div class="item-text">
+                                                    <span>Pengaturan Akun</span>
+                                                    <small>Profil & keamanan kata sandi</small>
+                                                </div>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                    <div class="dropdown-divider"></div>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item logout-btn">
+                                            <div class="item-icon rose"><i class="fas fa-sign-out-alt"></i></div>
+                                            <div class="item-text"><span>Keluar Sistem</span></div>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        @else
+                            <a href="/login" class="btn btn-outline btn-sm login-btn-custom desktop-only">
+                                <i class="fas fa-sign-in-alt"></i> <span>Masuk</span>
+                            </a>
+                        @endauth
+
+                        <a href="tel:+622112345678" class="btn-emergency desktop-only">
+                            <i class="fas fa-phone-alt"></i> <span>Darurat</span>
                         </a>
 
-                        <a href="tel:+622112345678" class="btn-emergency">
-                            <i class="fas fa-phone-alt"></i>
-                            <span>Darurat</span>
-                        </a>
-
-                        <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle navigation menu">
+                        <button class="mobile-toggle" id="mobileToggle" aria-label="Buka Menu Navigation">
                             <span class="hamburger-line"></span>
                             <span class="hamburger-line"></span>
                             <span class="hamburger-line"></span>
@@ -124,6 +165,66 @@
                 </div>
             </div>
         </nav>
+
+        <!-- Mobile Drawer -->
+        <div class="mobile-overlay" id="mobileOverlay"></div>
+        <aside class="mobile-drawer" id="mobileDrawer">
+            <div class="drawer-header">
+                <div class="drawer-logo">
+                    <div class="logo-icon sm"><i class="fas fa-heartbeat"></i></div>
+                    <span class="drawer-title">MutiaraKesehatan</span>
+                </div>
+                <button class="drawer-close-btn" id="drawerCloseBtn" aria-label="Tutup Menu">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            @auth
+                <div class="mobile-user-card">
+                    <div class="mobile-user-avatar">
+                        {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                        <span class="online-indicator"></span>
+                    </div>
+                    <div class="mobile-user-info">
+                        <p class="mobile-user-name">{{ auth()->user()->name }}</p>
+                        <span class="mobile-user-badge"><i class="fas fa-shield-alt"></i> Pasien Terverifikasi</span>
+                    </div>
+                </div>
+            @else
+                <div class="mobile-guest-card">
+                    <p class="guest-title">Selamat Datang!</p>
+                    <p class="guest-desc">Masuk untuk mengakses antrean & rekam medis Anda.</p>
+                    <a href="/login" class="mobile-btn-login">
+                        <i class="fas fa-sign-in-alt"></i> Masuk / Daftar Akun
+                    </a>
+                </div>
+            @endauth
+            <div class="drawer-content">
+                <p class="drawer-section-label">Navigasi Utama</p>
+                <ul class="mobile-nav-links">
+                    <li><a href="#beranda" class="mobile-nav-item active"><i class="fas fa-home"></i> <span>Beranda</span></a></li>
+                    <li><a href="#layanan" class="mobile-nav-item"><i class="fas fa-stethoscope"></i> <span>Layanan Medis</span></a></li>
+                    <li><a href="#dokter" class="mobile-nav-item"><i class="fas fa-user-md"></i> <span>Jadwal Dokter</span></a></li>
+                    <li><a href="#janji" class="mobile-nav-item"><i class="fas fa-calendar-check"></i> <span>Buat Janji Temu</span></a></li>
+                    @auth
+                        <p class="drawer-section-label">Akun Saya</p>
+                        <li><a href="{{ route('settings') }}" class="mobile-nav-item"><i class="fas fa-cog"></i> <span>Pengaturan Akun</span></a></li>
+                    @endauth
+                </ul>
+            </div>
+            <div class="drawer-footer">
+                <a href="tel:+622112345678" class="mobile-emergency-btn">
+                    <i class="fas fa-phone-alt"></i> Layanan Darurat 24 Jam
+                </a>
+                @auth
+                    <form method="POST" action="{{ route('logout') }}" class="mobile-logout-form">
+                        @csrf
+                        <button type="submit" class="mobile-logout-btn">
+                            <i class="fas fa-sign-out-alt"></i> Keluar Akun
+                        </button>
+                    </form>
+                @endauth
+            </div>
+        </aside>
     </header>
 
     <!-- ================= HERO SECTION ================= -->
@@ -131,64 +232,48 @@
         <div class="hero-bg-pattern"></div>
         <div class="container">
             <div class="hero-wrapper">
-                <!-- Hero Content -->
                 <div class="hero-content">
-                    <div class="hero-badge">
+                    <div class="hero-badge" data-aos="fade-right" data-aos-duration="600">
                         <i class="fas fa-shield-alt"></i>
                         <span>Terakreditasi Paripurna KARS 2024</span>
                     </div>
-                    <h1 class="hero-title">
+                    <h1 class="hero-title" data-aos="fade-right" data-aos-duration="700" data-aos-delay="100">
                         Kesehatan Anda,<br>
                         <span class="highlight">Prioritas Kami</span>
                     </h1>
-                    <p class="hero-description">
-                        Klinik SehatSejahtera hadir memberikan layanan kesehatan berkualitas tinggi
+                    <p class="hero-description" data-aos="fade-right" data-aos-duration="800" data-aos-delay="200">
+                        Klinik MutiaraKesehatan hadir memberikan layanan kesehatan berkualitas tinggi
                         dengan teknologi medis terkini dan tim dokter spesialis berpengalaman.
-                        Kami berkomitmen untuk kesehatan Anda dan keluarga.
                     </p>
-                    <div class="hero-actions">
+                    <div class="hero-actions" data-aos="fade-right" data-aos-duration="800" data-aos-delay="300">
                         <a href="#janji" class="btn btn-primary btn-lg">
-                            <i class="fas fa-calendar-check"></i>
-                            Buat Janji Konsultasi
+                            <i class="fas fa-calendar-check"></i> Buat Janji Konsultasi
                         </a>
                         <a href="#layanan" class="btn btn-outline btn-lg">
-                            <i class="fas fa-stethoscope"></i>
-                            Lihat Layanan
+                            <i class="fas fa-stethoscope"></i> Lihat Layanan
                         </a>
                     </div>
-                    <!-- Trust Indicators -->
-                    <div class="hero-trust">
-                        <div class="trust-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Dokter Bersertifikat</span>
-                        </div>
-                        <div class="trust-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Teknologi Modern</span>
-                        </div>
-                        <div class="trust-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>BPJS & Asuransi</span>
-                        </div>
+                    <div class="hero-trust" data-aos="fade-up" data-aos-duration="800" data-aos-delay="400">
+                        <div class="trust-item"><i class="fas fa-check-circle"></i> <span>Dokter Bersertifikat</span></div>
+                        <div class="trust-item"><i class="fas fa-check-circle"></i> <span>Teknologi Modern</span></div>
+                        <div class="trust-item"><i class="fas fa-check-circle"></i> <span>BPJS & Asuransi</span></div>
                     </div>
                 </div>
 
-                <!-- Hero Visual -->
                 <div class="hero-visual">
                     <div class="hero-image-wrapper">
-                        <div class="hero-image-placeholder">
+                        <div class="hero-image-placeholder" data-aos="zoom-in" data-aos-duration="800" data-aos-delay="200">
                             <i class="fas fa-user-md"></i>
                             <span>Tim Medis Profesional</span>
                         </div>
-                        <!-- Floating Cards -->
-                        <div class="floating-card card-1">
+                        <div class="floating-card card-1" data-aos="fade-left" data-aos-duration="800" data-aos-delay="400">
                             <i class="fas fa-calendar-check"></i>
                             <div>
                                 <strong>500+</strong>
                                 <span>Pasien/Bulan</span>
                             </div>
                         </div>
-                        <div class="floating-card card-2">
+                        <div class="floating-card card-2" data-aos="fade-right" data-aos-duration="800" data-aos-delay="500">
                             <i class="fas fa-star"></i>
                             <div>
                                 <strong>4.9/5</strong>
@@ -200,23 +285,22 @@
             </div>
         </div>
 
-        <!-- Statistics Bar -->
         <div class="stats-bar">
-            <div class="container">
+            <div class="container" data-aos="fade-up" data-aos-duration="800">
                 <div class="stats-grid">
-                    <div class="stat-item">
+                    <div class="stat-item" data-aos="zoom-in" data-aos-delay="100">
                         <div class="stat-number" data-target="15000">0</div>
                         <div class="stat-label">Pasien Terlayani</div>
                     </div>
-                    <div class="stat-item">
+                    <div class="stat-item" data-aos="zoom-in" data-aos-delay="200">
                         <div class="stat-number" data-target="25">0</div>
                         <div class="stat-label">Dokter Spesialis</div>
                     </div>
-                    <div class="stat-item">
+                    <div class="stat-item" data-aos="zoom-in" data-aos-delay="300">
                         <div class="stat-number" data-target="12">0</div>
                         <div class="stat-label">Layanan Medis</div>
                     </div>
-                    <div class="stat-item">
+                    <div class="stat-item" data-aos="zoom-in" data-aos-delay="400">
                         <div class="stat-number" data-target="10">0</div>
                         <div class="stat-label">Tahun Pengalaman</div>
                     </div>
@@ -225,420 +309,220 @@
         </div>
     </section>
 
-    <!-- ============================================
-         SERVICES SECTION
-         ============================================ -->
+    <!-- ================= SERVICES SECTION ================= -->
     <section class="services" id="layanan">
         <div class="container">
-            <!-- Section Header -->
-            <div class="section-header">
+            <div class="section-header" data-aos="fade-up" data-aos-duration="700">
                 <span class="section-subtitle">Layanan Unggulan Kami</span>
                 <h2 class="section-title">Layanan Medis <span class="highlight">Komprehensif</span></h2>
                 <p class="section-description">
-                    Kami menyediakan berbagai layanan kesehatan berkualitas tinggi untuk memenuhi
-                    kebutuhan medis Anda dan keluarga dengan standar internasional.
+                    Kami menyediakan berbagai layanan kesehatan berkualitas tinggi untuk memenuhi kebutuhan medis Anda dan keluarga.
                 </p>
             </div>
 
-            <!-- Services Grid -->
             <div class="services-grid">
-                <!-- Service Card 1 -->
-                <div class="service-card" data-aos="fade-up">
-                    <div class="service-icon">
-                        <i class="fas fa-stethoscope"></i>
-                    </div>
+                <div class="service-card" data-aos="fade-up" data-aos-delay="100">
+                    <div class="service-icon"><i class="fas fa-stethoscope"></i></div>
                     <h3 class="service-title">Poliklinik Umum</h3>
-                    <p class="service-description">
-                        Pemeriksaan kesehatan umum, konsultasi medis, dan penanganan penyakit
-                        ringan hingga sedang oleh dokter umum berpengalaman.
-                    </p>
+                    <p class="service-description">Pemeriksaan kesehatan umum dan penanganan penyakit oleh dokter umum berpengalaman.</p>
                     <ul class="service-features">
                         <li><i class="fas fa-check"></i> Pemeriksaan Fisik Lengkap</li>
                         <li><i class="fas fa-check"></i> Resep & Surat Keterangan</li>
-                        <li><i class="fas fa-check"></i> Konsultasi Lanjutan</li>
                     </ul>
-                    <a href="#janji" class="service-link">
-                        Buat Janji <i class="fas fa-arrow-right"></i>
-                    </a>
+                    <a href="#janji" class="service-link">Buat Janji <i class="fas fa-arrow-right"></i></a>
                 </div>
 
-                <!-- Service Card 2 -->
-                <div class="service-card" data-aos="fade-up">
-                    <div class="service-icon">
-                        <i class="fas fa-tooth"></i>
-                    </div>
+                <div class="service-card" data-aos="fade-up" data-aos-delay="200">
+                    <div class="service-icon"><i class="fas fa-tooth"></i></div>
                     <h3 class="service-title">Klinik Gigi</h3>
-                    <p class="service-description">
-                        Perawatan gigi dan mulut komprehensif mulai dari pembersihan,
-                        penambalan, hingga prosedur estetika gigi.
-                    </p>
+                    <p class="service-description">Perawatan gigi dan mulut komprehensif mulai dari scaling hingga prosedur estetika.</p>
                     <ul class="service-features">
                         <li><i class="fas fa-check"></i> Scaling & Whitening</li>
-                        <li><i class="fas fa-check"></i> Tambal & Cabut Gigi</li>
                         <li><i class="fas fa-check"></i> Orthodonti (Behel)</li>
                     </ul>
-                    <a href="#janji" class="service-link">
-                        Buat Janji <i class="fas fa-arrow-right"></i>
-                    </a>
+                    <a href="#janji" class="service-link">Buat Janji <i class="fas fa-arrow-right"></i></a>
                 </div>
 
-                <!-- Service Card 3 -->
-                <div class="service-card" data-aos="fade-up">
-                    <div class="service-icon">
-                        <i class="fas fa-baby"></i>
-                    </div>
+                <div class="service-card" data-aos="fade-up" data-aos-delay="300">
+                    <div class="service-icon"><i class="fas fa-baby"></i></div>
                     <h3 class="service-title">Klinik Anak</h3>
-                    <p class="service-description">
-                        Layanan kesehatan khusus anak meliputi imunisasi, tumbuh kembang,
-                        dan penanganan penyakit anak oleh dokter spesialis anak.
-                    </p>
+                    <p class="service-description">Layanan imunisasi, tumbuh kembang, dan penanganan penyakit oleh spesialis anak.</p>
                     <ul class="service-features">
                         <li><i class="fas fa-check"></i> Imunisasi Lengkap</li>
                         <li><i class="fas fa-check"></i> Monitoring Tumbuh Kembang</li>
-                        <li><i class="fas fa-check"></i> Konsultasi Nutrisi Anak</li>
                     </ul>
-                    <a href="#janji" class="service-link">
-                        Buat Janji <i class="fas fa-arrow-right"></i>
-                    </a>
+                    <a href="#janji" class="service-link">Buat Janji <i class="fas fa-arrow-right"></i></a>
                 </div>
 
-                <!-- Service Card 4 -->
-                <div class="service-card" data-aos="fade-up">
-                    <div class="service-icon">
-                        <i class="fas fa-flask"></i>
-                    </div>
+                <div class="service-card" data-aos="fade-up" data-aos-delay="400">
+                    <div class="service-icon"><i class="fas fa-flask"></i></div>
                     <h3 class="service-title">Laboratorium</h3>
-                    <p class="service-description">
-                        Pemeriksaan laboratorium lengkap dengan peralatan modern dan
-                        hasil yang akurat untuk mendukung diagnosis medis.
-                    </p>
+                    <p class="service-description">Pemeriksaan laboratorium lengkap dengan peralatan modern dan hasil akurat.</p>
                     <ul class="service-features">
                         <li><i class="fas fa-check"></i> Darah Lengkap & Kimia</li>
-                        <li><i class="fas fa-check"></i> Urine & Feses</li>
                         <li><i class="fas fa-check"></i> Hasil Cepat (1-2 Jam)</li>
                     </ul>
-                    <a href="#janji" class="service-link">
-                        Buat Janji <i class="fas fa-arrow-right"></i>
-                    </a>
+                    <a href="#janji" class="service-link">Buat Janji <i class="fas fa-arrow-right"></i></a>
                 </div>
 
-                <!-- Service Card 5 -->
-                <div class="service-card" data-aos="fade-up">
-                    <div class="service-icon">
-                        <i class="fas fa-heart"></i>
-                    </div>
+                <div class="service-card" data-aos="fade-up" data-aos-delay="500">
+                    <div class="service-icon"><i class="fas fa-heart"></i></div>
                     <h3 class="service-title">Klinik Jantung</h3>
-                    <p class="service-description">
-                        Pemeriksaan dan penanganan penyakit kardiovaskular oleh dokter
-                        spesialis jantung dengan teknologi EKG dan Echocardiography.
-                    </p>
+                    <p class="service-description">Pemeriksaan kardiovaskular oleh dokter spesialis jantung dengan EKG & Echocardiography.</p>
                     <ul class="service-features">
                         <li><i class="fas fa-check"></i> EKG & Treadmill Test</li>
                         <li><i class="fas fa-check"></i> Echocardiography</li>
-                        <li><i class="fas fa-check"></i> Konsultasi Jantung</li>
                     </ul>
-                    <a href="#janji" class="service-link">
-                        Buat Janji <i class="fas fa-arrow-right"></i>
-                    </a>
+                    <a href="#janji" class="service-link">Buat Janji <i class="fas fa-arrow-right"></i></a>
                 </div>
 
-                <!-- Service Card 6 -->
-                <div class="service-card" data-aos="fade-up">
-                    <div class="service-icon">
-                        <i class="fas fa-x-ray"></i>
-                    </div>
+                <div class="service-card" data-aos="fade-up" data-aos-delay="600">
+                    <div class="service-icon"><i class="fas fa-x-ray"></i></div>
                     <h3 class="service-title">Radiologi</h3>
-                    <p class="service-description">
-                        Layanan pencitraan medis meliputi Rontgen, USG, dan CT Scan
-                        untuk diagnosis yang lebih akurat dan tepat.
-                    </p>
+                    <p class="service-description">Layanan pencitraan medis meliputi Rontgen Digital, USG 4D, dan CT Scan.</p>
                     <ul class="service-features">
                         <li><i class="fas fa-check"></i> Rontgen Digital</li>
                         <li><i class="fas fa-check"></i> USG 4D</li>
-                        <li><i class="fas fa-check"></i> CT Scan 128 Slice</li>
                     </ul>
-                    <a href="#janji" class="service-link">
-                        Buat Janji <i class="fas fa-arrow-right"></i>
-                    </a>
+                    <a href="#janji" class="service-link">Buat Janji <i class="fas fa-arrow-right"></i></a>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ============================================
-         DOCTORS SECTION
-         ============================================ -->
+    <!-- ================= DOCTORS SECTION (DINAMIS DARI DATABASE) ================= -->
     <section class="doctors" id="dokter">
         <div class="container">
-            <!-- Section Header -->
-            <div class="section-header">
+            <div class="section-header" data-aos="fade-up" data-aos-duration="700">
                 <span class="section-subtitle">Tim Medis Kami</span>
                 <h2 class="section-title">Dokter <span class="highlight">Spesialis</span> Berpengalaman</h2>
                 <p class="section-description">
-                    Didukung oleh tim dokter spesialis bersertifikat dengan pengalaman
-                    bertahun-tahun di bidangnya masing-masing.
+                    Didukung oleh tim dokter bersertifikat dengan pengalaman di bidangnya masing-masing.
                 </p>
             </div>
 
-            <!-- Doctors Grid -->
             <div class="doctors-grid">
-                <!-- Doctor Card 1 -->
-                <div class="doctor-card">
-                    <div class="doctor-image">
-                        <div class="doctor-photo-placeholder">
-                            <i class="fas fa-user-md"></i>
+                @forelse($doctors ?? [] as $index => $doctor)
+                    <div class="doctor-card" data-aos="fade-up" data-aos-delay="{{ ($index % 4 + 1) * 100 }}" data-aos-duration="750">
+                        <div class="doctor-image">
+                            @if(isset($doctor->photo) && $doctor->photo)
+                                <img src="{{ asset('storage/' . $doctor->photo) }}" alt="{{ $doctor->name }}" class="doctor-img-fluid">
+                            @else
+                                <div class="doctor-photo-placeholder">
+                                    <i class="fas fa-user-md"></i>
+                                </div>
+                            @endif
+                            <div class="doctor-status">
+                                <span class="status-dot {{ ($doctor->is_available ?? true) ? 'available' : 'unavailable' }}"></span>
+                                <span>{{ ($doctor->is_available ?? true) ? 'Tersedia Hari Ini' : ($doctor->next_available ?? 'Jadwal Mendatang') }}</span>
+                            </div>
                         </div>
-                        <div class="doctor-status">
-                            <span class="status-dot available"></span>
-                            <span>Tersedia Hari Ini</span>
+                        <div class="doctor-info">
+                            <h3 class="doctor-name">{{ $doctor->name }}</h3>
+                            <p class="doctor-specialty">{{ $doctor->specialty ?? $doctor->specialization ?? 'Dokter Spesialis' }}</p>
+                            <div class="doctor-details">
+                                <div class="detail-item">
+                                    <i class="fas fa-graduation-cap"></i>
+                                    <span>{{ $doctor->almamater ?? $doctor->education ?? 'Alumni FKM / FK Terbaik' }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-briefcase-medical"></i>
+                                    <span>{{ $doctor->experience ?? '5+' }} Tahun Pengalaman</span>
+                                </div>
+                            </div>
+                            <div class="doctor-schedule">
+                                <span class="schedule-label">Jadwal Praktik:</span>
+                                <div class="schedule-days">
+                                    @if(isset($doctor->schedules) && is_array($doctor->schedules))
+                                        @foreach($doctor->schedules as $day)
+                                            <span class="day-badge">{{ $day }}</span>
+                                        @endforeach
+                                    @else
+                                        <span class="day-badge">Sen</span>
+                                        <span class="day-badge">Rab</span>
+                                        <span class="day-badge">Jum</span>
+                                    @endif
+                                </div>
+                                <span class="schedule-time">{{ $doctor->practice_hours ?? '08:00 - 16:00 WIB' }}</span>
+                            </div>
+                            <a href="#janji" onclick="selectDoctorForBooking('{{ $doctor->id ?? $doctor->name }}')" class="btn btn-primary btn-sm">
+                                <i class="fas fa-calendar-check"></i> Buat Janji
+                            </a>
                         </div>
                     </div>
-                    <div class="doctor-info">
-                        <h3 class="doctor-name">dr. Ahmad Fauzi, Sp.PD</h3>
-                        <p class="doctor-specialty">Spesialis Penyakit Dalam</p>
-                        <div class="doctor-details">
-                            <div class="detail-item">
-                                <i class="fas fa-graduation-cap"></i>
-                                <span>UI & RS Cipto Mangunkusumo</span>
-                            </div>
-                            <div class="detail-item">
-                                <i class="fas fa-briefcase-medical"></i>
-                                <span>15 Tahun Pengalaman</span>
-                            </div>
-                        </div>
-                        <div class="doctor-schedule">
-                            <span class="schedule-label">Jadwal Praktik:</span>
-                            <div class="schedule-days">
-                                <span class="day-badge">Sen</span>
-                                <span class="day-badge">Rab</span>
-                                <span class="day-badge">Jum</span>
-                            </div>
-                            <span class="schedule-time">08:00 - 14:00 WIB</span>
-                        </div>
-                        <a href="#janji" class="btn btn-primary btn-sm">
-                            <i class="fas fa-calendar-check"></i> Buat Janji
-                        </a>
+                @empty
+                    <div class="no-doctors-found" data-aos="fade-up" style="grid-column: 1 / -1; text-align: center; padding: 40px; background: #f8fafc; border-radius: 16px;">
+                        <i class="fas fa-user-md-slash" style="font-size: 3rem; color: #94a3b8; margin-bottom: 12px;"></i>
+                        <h4 style="font-weight: 700; color: #1e293b;">Belum ada dokter yang terdaftar</h4>
+                        <p style="color: #64748b; font-size: 0.9rem;">Jadwal dokter sedang diperbarui oleh pihak administrator klinik.</p>
                     </div>
-                </div>
-
-                <!-- Doctor Card 2 -->
-                <div class="doctor-card">
-                    <div class="doctor-image">
-                        <div class="doctor-photo-placeholder">
-                            <i class="fas fa-user-md"></i>
-                        </div>
-                        <div class="doctor-status">
-                            <span class="status-dot available"></span>
-                            <span>Tersedia Hari Ini</span>
-                        </div>
-                    </div>
-                    <div class="doctor-info">
-                        <h3 class="doctor-name">dr. Siti Nurhaliza, Sp.A</h3>
-                        <p class="doctor-specialty">Spesialis Anak</p>
-                        <div class="doctor-details">
-                            <div class="detail-item">
-                                <i class="fas fa-graduation-cap"></i>
-                                <span>UGM & RS Anak Jakarta</span>
-                            </div>
-                            <div class="detail-item">
-                                <i class="fas fa-briefcase-medical"></i>
-                                <span>12 Tahun Pengalaman</span>
-                            </div>
-                        </div>
-                        <div class="doctor-schedule">
-                            <span class="schedule-label">Jadwal Praktik:</span>
-                            <div class="schedule-days">
-                                <span class="day-badge">Sel</span>
-                                <span class="day-badge">Kam</span>
-                                <span class="day-badge">Sab</span>
-                            </div>
-                            <span class="schedule-time">09:00 - 15:00 WIB</span>
-                        </div>
-                        <a href="#janji" class="btn btn-primary btn-sm">
-                            <i class="fas fa-calendar-check"></i> Buat Janji
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Doctor Card 3 -->
-                <div class="doctor-card">
-                    <div class="doctor-image">
-                        <div class="doctor-photo-placeholder">
-                            <i class="fas fa-user-md"></i>
-                        </div>
-                        <div class="doctor-status">
-                            <span class="status-dot available"></span>
-                            <span>Tersedia Hari Ini</span>
-                        </div>
-                    </div>
-                    <div class="doctor-info">
-                        <h3 class="doctor-name">drg. Budi Santoso, Sp.Ort</h3>
-                        <p class="doctor-specialty">Spesialis Ortodonti Gigi</p>
-                        <div class="doctor-details">
-                            <div class="detail-item">
-                                <i class="fas fa-graduation-cap"></i>
-                                <span>Unpad & AADB Melbourne</span>
-                            </div>
-                            <div class="detail-item">
-                                <i class="fas fa-briefcase-medical"></i>
-                                <span>10 Tahun Pengalaman</span>
-                            </div>
-                        </div>
-                        <div class="doctor-schedule">
-                            <span class="schedule-label">Jadwal Praktik:</span>
-                            <div class="schedule-days">
-                                <span class="day-badge">Sen</span>
-                                <span class="day-badge">Sel</span>
-                                <span class="day-badge">Kam</span>
-                                <span class="day-badge">Jum</span>
-                            </div>
-                            <span class="schedule-time">10:00 - 17:00 WIB</span>
-                        </div>
-                        <a href="#janji" class="btn btn-primary btn-sm">
-                            <i class="fas fa-calendar-check"></i> Buat Janji
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Doctor Card 4 -->
-                <div class="doctor-card">
-                    <div class="doctor-image">
-                        <div class="doctor-photo-placeholder">
-                            <i class="fas fa-user-md"></i>
-                        </div>
-                        <div class="doctor-status">
-                            <span class="status-dot unavailable"></span>
-                            <span>Senin Depan</span>
-                        </div>
-                    </div>
-                    <div class="doctor-info">
-                        <h3 class="doctor-name">dr. Rina Wati, Sp.JP</h3>
-                        <p class="doctor-specialty">Spesialis Jantung & Pembuluh Darah</p>
-                        <div class="doctor-details">
-                            <div class="detail-item">
-                                <i class="fas fa-graduation-cap"></i>
-                                <span>Undip & National Heart Centre SG</span>
-                            </div>
-                            <div class="detail-item">
-                                <i class="fas fa-briefcase-medical"></i>
-                                <span>18 Tahun Pengalaman</span>
-                            </div>
-                        </div>
-                        <div class="doctor-schedule">
-                            <span class="schedule-label">Jadwal Praktik:</span>
-                            <div class="schedule-days">
-                                <span class="day-badge">Sen</span>
-                                <span class="day-badge">Rab</span>
-                                <span class="day-badge">Jum</span>
-                            </div>
-                            <span class="schedule-time">13:00 - 19:00 WIB</span>
-                        </div>
-                        <a href="#janji" class="btn btn-primary btn-sm">
-                            <i class="fas fa-calendar-check"></i> Buat Janji
-                        </a>
-                    </div>
-                </div>
+                @endforelse
             </div>
         </div>
     </section>
 
-    <!-- ============================================
-         APPOINTMENT FORM SECTION
-         ============================================ -->
+    <!-- ================= APPOINTMENT FORM SECTION ================= -->
     <section class="appointment" id="janji">
         <div class="container">
             <div class="appointment-wrapper">
-                <!-- Left Side - Info -->
-                <div class="appointment-info">
+                <div class="appointment-info" data-aos="fade-right" data-aos-duration="800">
                     <span class="section-subtitle light">Buat Janji Temu</span>
                     <h2 class="section-title light">Reservasi Jadwal <span class="highlight">Konsultasi</span> Anda</h2>
                     <p class="appointment-description">
-                        Isi formulir di samping untuk membuat janji temu dengan dokter pilihan Anda.
-                        Tim kami akan mengkonfirmasi jadwal melalui WhatsApp/Email dalam 1x24 jam.
+                        Isi formulir di samping untuk membuat janji temu. Anda akan otomatis dialihkan ke wizard pendaftaran untuk verifikasi dan konfirmasi nomor antrean.
                     </p>
                     <div class="appointment-benefits">
                         <div class="benefit-item">
-                            <div class="benefit-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
+                            <div class="benefit-icon"><i class="fas fa-clock"></i></div>
                             <div>
                                 <h4>Tanpa Antri Lama</h4>
                                 <p>Datang sesuai jadwal, langsung dilayani</p>
                             </div>
                         </div>
                         <div class="benefit-item">
-                            <div class="benefit-icon">
-                                <i class="fas fa-bell"></i>
-                            </div>
+                            <div class="benefit-icon"><i class="fas fa-bell"></i></div>
                             <div>
                                 <h4>Pengingat Otomatis</h4>
                                 <p>Notifikasi H-1 via WhatsApp</p>
                             </div>
                         </div>
-                        <div class="benefit-item">
-                            <div class="benefit-icon">
-                                <i class="fas fa-redo"></i>
-                            </div>
-                            <div>
-                                <h4>Reschedule Gratis</h4>
-                                <p>Ubah jadwal tanpa biaya tambahan</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
-                <!-- Right Side - Form -->
-                <div class="appointment-form-wrapper">
-                    <form class="appointment-form" id="appointmentForm" novalidate>
+                <div class="appointment-form-wrapper" data-aos="fade-left" data-aos-duration="800">
+                    <form class="appointment-form" id="appointmentForm" action="{{ route('booking-wizard') }}" method="GET" novalidate>
                         <h3 class="form-title">Formulir Pendaftaran</h3>
 
-                        <!-- Form Row 1 -->
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="patientName" class="form-label">
-                                    Nama Lengkap <span class="required">*</span>
-                                </label>
-                                <input type="text" id="patientName" name="patientName"
-                                       class="form-input" placeholder="Masukkan nama lengkap" required>
+                                <label for="patientName" class="form-label">Nama Lengkap <span class="required">*</span></label>
+                                <input type="text" id="patientName" name="name" class="form-input" placeholder="Masukkan nama lengkap" required>
                                 <span class="form-error" id="nameError"></span>
                             </div>
                             <div class="form-group">
-                                <label for="patientEmail" class="form-label">
-                                    Email <span class="required">*</span>
-                                </label>
-                                <input type="email" id="patientEmail" name="patientEmail"
-                                       class="form-input" placeholder="email@contoh.com" required>
+                                <label for="patientEmail" class="form-label">Email <span class="required">*</span></label>
+                                <input type="email" id="patientEmail" name="email" class="form-input" placeholder="email@contoh.com" required>
                                 <span class="form-error" id="emailError"></span>
                             </div>
                         </div>
 
-                        <!-- Form Row 2 -->
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="patientPhone" class="form-label">
-                                    No. Telepon/WA <span class="required">*</span>
-                                </label>
-                                <input type="tel" id="patientPhone" name="patientPhone"
-                                       class="form-input" placeholder="08xxxxxxxxxx" required>
+                                <label for="patientPhone" class="form-label">No. Telepon/WA <span class="required">*</span></label>
+                                <input type="tel" id="patientPhone" name="phone" class="form-input" placeholder="08xxxxxxxxxx" required>
                                 <span class="form-error" id="phoneError"></span>
                             </div>
                             <div class="form-group">
-                                <label for="appointmentDate" class="form-label">
-                                    Tanggal Kunjungan <span class="required">*</span>
-                                </label>
-                                <input type="date" id="appointmentDate" name="appointmentDate"
-                                       class="form-input" required>
+                                <label for="appointmentDate" class="form-label">Tanggal Kunjungan <span class="required">*</span></label>
+                                <input type="date" id="appointmentDate" name="date" class="form-input" required>
                                 <span class="form-error" id="dateError"></span>
                             </div>
                         </div>
 
-                        <!-- Form Row 3 -->
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="serviceSelect" class="form-label">
-                                    Pilih Poli/Layanan <span class="required">*</span>
-                                </label>
-                                <select id="serviceSelect" name="serviceSelect" class="form-input form-select" required>
+                                <label for="serviceSelect" class="form-label">Pilih Poli/Layanan <span class="required">*</span></label>
+                                <select id="serviceSelect" name="service" class="form-input form-select" required>
                                     <option value="">-- Pilih Layanan --</option>
                                     <option value="umum">Poliklinik Umum</option>
                                     <option value="gigi">Klinik Gigi</option>
@@ -650,77 +534,48 @@
                                 <span class="form-error" id="serviceError"></span>
                             </div>
                             <div class="form-group">
-                                <label for="doctorSelect" class="form-label">
-                                    Pilih Dokter
-                                </label>
-                                <select id="doctorSelect" name="doctorSelect" class="form-input form-select">
+                                <label for="doctorSelect" class="form-label">Pilih Dokter</label>
+                                <select id="doctorSelect" name="doctor_id" class="form-input form-select">
                                     <option value="">-- Pilih Dokter --</option>
-                                    <option value="fauzi">dr. Ahmad Fauzi, Sp.PD</option>
-                                    <option value="nurhaliza">dr. Siti Nurhaliza, Sp.A</option>
-                                    <option value="santoso">drg. Budi Santoso, Sp.Ort</option>
-                                    <option value="rina">dr. Rina Wati, Sp.JP</option>
+                                    @foreach($doctors ?? [] as $doc)
+                                        <option value="{{ $doc->id }}">{{ $doc->name }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>
 
-                        <!-- Form Row 4 - Notes -->
                         <div class="form-group full-width">
-                            <label for="patientNotes" class="form-label">
-                                Keluhan / Catatan Tambahan
-                            </label>
-                            <textarea id="patientNotes" name="patientNotes" class="form-input form-textarea"
-                                      rows="4" placeholder="Jelaskan keluhan atau catatan khusus..."></textarea>
+                            <label for="patientNotes" class="form-label">Keluhan / Catatan Tambahan</label>
+                            <textarea id="patientNotes" name="notes" class="form-input form-textarea" rows="3" placeholder="Jelaskan keluhan atau catatan khusus..."></textarea>
                         </div>
 
-                        <!-- Submit Button -->
                         <button type="submit" class="btn btn-primary btn-lg btn-full" id="submitBtn">
                             <i class="fas fa-paper-plane"></i>
-                            <span>Kirim Pendaftaran</span>
+                            <span>Lanjutkan ke Booking Wizard</span>
                         </button>
-
-                        <!-- Success Message (Hidden by default) -->
-                        <div class="form-success" id="formSuccess">
-                            <i class="fas fa-check-circle"></i>
-                            <h4>Pendaftaran Berhasil!</h4>
-                            <p>Tim kami akan menghubungi Anda dalam 1x24 jam untuk konfirmasi jadwal.</p>
-                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ============================================
-         FOOTER
-         ============================================ -->
-    <footer class="footer" id="kontak">
+    <!-- ================= FOOTER ================= -->
+    <footer class="footer" id="kontak" data-aos="fade-up" data-aos-duration="800">
         <div class="container">
             <div class="footer-grid">
-                <!-- Footer Column 1 - About -->
                 <div class="footer-col">
                     <div class="footer-logo">
-                        <div class="logo-icon">
-                            <i class="fas fa-heartbeat"></i>
-                        </div>
+                        <div class="logo-icon"><i class="fas fa-heartbeat"></i></div>
                         <div class="logo-text">
-                            <span class="logo-name">SehatSejahtera</span>
+                            <span class="logo-name">MutiaraKesehatan</span>
                             <span class="logo-tagline">Klinik Kesehatan Modern</span>
                         </div>
                     </div>
                     <p class="footer-about">
-                        Klinik SehatSejahtera berkomitmen memberikan layanan kesehatan terbaik
-                        dengan pendekatan personal dan teknologi medis terkini untuk kesejahteraan
-                        Anda dan keluarga.
+                        Klinik MutiaraKesehatan berkomitmen memberikan layanan kesehatan terbaik dengan pendekatan personal.
                     </p>
-                    <div class="footer-socials">
-                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                        <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
-                    </div>
                 </div>
 
-                <!-- Footer Column 2 - Quick Links -->
                 <div class="footer-col">
                     <h4 class="footer-heading">Tautan Cepat</h4>
                     <ul class="footer-links">
@@ -728,101 +583,51 @@
                         <li><a href="#layanan"><i class="fas fa-chevron-right"></i> Layanan Kami</a></li>
                         <li><a href="#dokter"><i class="fas fa-chevron-right"></i> Tim Dokter</a></li>
                         <li><a href="#janji"><i class="fas fa-chevron-right"></i> Buat Janji</a></li>
-                        <li><a href="#"><i class="fas fa-chevron-right"></i> Karir</a></li>
-                        <li><a href="#"><i class="fas fa-chevron-right"></i> Kebijakan Privasi</a></li>
                     </ul>
                 </div>
 
-                <!-- Footer Column 3 - Operating Hours -->
                 <div class="footer-col">
                     <h4 class="footer-heading">Jam Operasional</h4>
                     <ul class="footer-hours">
-                        <li>
-                            <span>Senin - Jumat</span>
-                            <strong>08:00 - 21:00</strong>
-                        </li>
-                        <li>
-                            <span>Sabtu</span>
-                            <strong>08:00 - 17:00</strong>
-                        </li>
-                        <li>
-                            <span>Minggu</span>
-                            <strong>09:00 - 14:00</strong>
-                        </li>
-                        <li class="hours-emergency">
-                            <i class="fas fa-ambulance"></i>
-                            <span>IGD 24 Jam</span>
-                            <strong>Setiap Hari</strong>
-                        </li>
+                        <li><span>Senin - Jumat</span> <strong>08:00 - 21:00</strong></li>
+                        <li><span>Sabtu</span> <strong>08:00 - 17:00</strong></li>
+                        <li class="hours-emergency"><i class="fas fa-ambulance"></i> <span>IGD 24 Jam</span></li>
                     </ul>
                 </div>
 
-                <!-- Footer Column 4 - Contact -->
                 <div class="footer-col">
                     <h4 class="footer-heading">Hubungi Kami</h4>
                     <ul class="footer-contact">
-                        <li>
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>Jl. Kesehatan No. 123,<br>Jakarta Selatan 12345</span>
-                        </li>
-                        <li>
-                            <i class="fas fa-phone-alt"></i>
-                            <div>
-                                <a href="tel:+622112345678">(021) 123-4567</a>
-                                <small>Telepon Klinik</small>
-                            </div>
-                        </li>
-                        <li>
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <div>
-                                <a href="tel:+6281234567890" class="emergency-number">0812-3456-7890</a>
-                                <small>Nomor Darurat 24 Jam</small>
-                            </div>
-                        </li>
-                        <li>
-                            <i class="fas fa-envelope"></i>
-                            <div>
-                                <a href="mailto:info@sehatsejahtera.com">info@sehatsejahtera.com</a>
-                            </div>
-                        </li>
+                        <li><i class="fas fa-map-marker-alt"></i> <span>Jl. Kesehatan No. 123, Jakarta</span></li>
+                        <li><i class="fas fa-phone-alt"></i> <a href="tel:+622112345678">(021) 123-4567</a></li>
                     </ul>
                 </div>
             </div>
-
-            <!-- Footer Bottom -->
             <div class="footer-bottom">
-                <p>&copy; 2024 Klinik SehatSejahtera. Seluruh hak cipta dilindungi undang-undang.</p>
-                <p>Dibuat dengan <i class="fas fa-heart"></i> untuk kesehatan Indonesia</p>
+                <p>© 2026 Klinik MutiaraKesehatan. Seluruh hak cipta dilindungi.</p>
             </div>
         </div>
     </footer>
 
-    <!-- ================= PURE JS / ALPINE CHATBOT WIDGET ================= -->
+    <!-- ================= CHATBOT WIDGET ================= -->
     <div class="chatbot-widget">
-        <!-- Floating Trigger Button -->
         <button type="button" class="chatbot-toggle" @click="chatOpen = !chatOpen">
-            <span class="chatbot-toggle-icon">
-                <i class="fas fa-comments"></i>
-            </span>
+            <span class="chatbot-toggle-icon"><i class="fas fa-comments"></i></span>
             <span class="chatbot-badge" id="chatbotBadge">1</span>
-            <span class="chatbot-pulse"></span>
-
         </button>
 
-        <!-- Chat Modal Box -->
         <div class="chatbot-window" :class="{ 'open': chatOpen }">
             <div class="chatbot-header">
                 <div class="chatbot-header-info">
                     <div class="chatbot-avatar"><i class="fas fa-robot"></i></div>
                     <div class="chatbot-header-text">
                         <h4>SehatBot Assistant</h4>
-                        <span class="chatbot-status">Online - Siap Membantu</span>
+                        <span class="chatbot-status">Online</span>
                     </div>
                 </div>
                 <button type="button" class="chatbot-action-btn" @click="chatOpen = false"><i class="fas fa-times"></i></button>
             </div>
 
-            <!-- Chat Messages Container -->
             <div class="chatbot-messages" id="chatMessagesArea">
                 <template x-for="(msg, index) in chatMessages" :key="index">
                     <div class="message" :class="msg.sender">
@@ -831,28 +636,110 @@
                 </template>
             </div>
 
-            <!-- Quick Reply Prompt Buttons -->
             <div class="chatbot-quick-replies">
-                <button type="button" class="quick-reply-btn" @click="sendMessage('jam operasional')">
-                    <i class="fas fa-clock"></i> Jam Buka
-                </button>
-                <button type="button" class="quick-reply-btn" @click="sendMessage('jadwal dokter')">
-                    <i class="fas fa-user-md"></i> Jadwal Dokter
-                </button>
-                <button type="button" class="quick-reply-btn" @click="sendMessage('biaya')">
-                    <i class="fas fa-money-bill-wave"></i> Biaya
-                </button>
+                <button type="button" class="quick-reply-btn" @click="sendMessage('jam operasional')"><i class="fas fa-clock"></i> Jam Buka</button>
+                <button type="button" class="quick-reply-btn" @click="sendMessage('jadwal dokter')"><i class="fas fa-user-md"></i> Jadwal Dokter</button>
+                <button type="button" class="quick-reply-btn" @click="sendMessage('biaya')"><i class="fas fa-money-bill-wave"></i> Biaya</button>
             </div>
 
-            <!-- Chat Input Area (Form Client-Side Prevent) -->
             <div class="chatbot-input-area">
                 <div class="chatbot-input-wrapper">
                     <input type="text" x-model="userText" @keydown.enter.prevent="sendMessage()" class="chatbot-input" placeholder="Ketik pertanyaan Anda...">
-                    <button type="button" @click="sendMessage()" class="chatbot-send-btn">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
+                    <button type="button" @click="sendMessage()" class="chatbot-send-btn"><i class="fas fa-paper-plane"></i></button>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- ================= JAVASCRIPT LOGIC ================= -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Inisialisasi AOS (Animate On Scroll)
+        if (typeof AOS !== 'undefined') {
+            AOS.init({
+                once: true,
+                duration: 750,
+                easing: 'ease-out-cubic',
+                offset: 100
+            });
+        }
+
+        // 2. Logic Mobile Drawer Toggle (Vanilla JS)
+        const mobileToggle = document.getElementById('mobileToggle');
+        const mobileDrawer = document.getElementById('mobileDrawer');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+        const drawerCloseBtn = document.getElementById('drawerCloseBtn');
+
+        function openMobileMenu() {
+            if (mobileDrawer && mobileOverlay && mobileToggle) {
+                mobileDrawer.classList.add('active');
+                mobileOverlay.classList.add('active');
+                mobileToggle.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeMobileMenu() {
+            if (mobileDrawer && mobileOverlay && mobileToggle) {
+                mobileDrawer.classList.remove('active');
+                mobileOverlay.classList.remove('active');
+                mobileToggle.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        if (mobileToggle) mobileToggle.addEventListener('click', openMobileMenu);
+        if (mobileOverlay) mobileOverlay.addEventListener('click', closeMobileMenu);
+        if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeMobileMenu);
+
+        // 3. User Dropdown Toggle (Desktop)
+        const dropdownContainer = document.getElementById('userDropdownContainer');
+        const dropdownBtn = document.getElementById('userDropdownBtn');
+        if (dropdownContainer && dropdownBtn) {
+            dropdownBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdownContainer.classList.toggle('active');
+            });
+            document.addEventListener('click', function(e) {
+                if (!dropdownContainer.contains(e.target)) {
+                    dropdownContainer.classList.remove('active');
+                }
+            });
+        }
+
+        //4. Submit Form -> Redireksi ke Booking Wizard
+        const form = document.getElementById('appointmentForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const name = document.getElementById('patientName').value;
+                const email = document.getElementById('patientEmail').value;
+                const phone = document.getElementById('patientPhone').value;
+                const date = document.getElementById('appointmentDate').value;
+                const service = document.getElementById('serviceSelect').value;
+
+                if (!name || !email || !phone || !date || !service) {
+                    alert('Mohon lengkapi semua kolom bertanda bintang (*) sebelum melanjutkan.');
+                    return;
+                }
+
+                const formData = new FormData(form);
+                const params = new URLSearchParams(formData).toString();
+
+                // 💡 Menggunakan helper route() Laravel langsung agar URL selalu akurat
+                const targetUrl = "{{ route('booking-wizard') }}";
+
+                window.location.href = targetUrl + "?" + params;
+            });
+        }
+    });
+
+    function selectDoctorForBooking(doctorId) {
+        const doctorSelect = document.getElementById('doctorSelect');
+        if (doctorSelect) {
+            doctorSelect.value = doctorId;
+        }
+    }
+</script>

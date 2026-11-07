@@ -23,10 +23,10 @@
 
         <!-- Chat Bubble Container -->
         <div class="p-4 h-80 overflow-y-auto flex flex-col gap-3 text-sm bg-gray-50">
-            @foreach($messages as $msg)
-                <div class="flex {{ $msg['sender'] === 'user' ? 'justify-end' : 'justify-start' }}">
-                    <div class="max-w-[85%] p-3 rounded-2xl whitespace-pre-line {{ $msg['sender'] === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-gray-800 border border-gray-200 shadow-sm rounded-bl-none' }}">
-                        {!! nl2br(e($msg['text'])) !!}
+            @foreach($messages ?? [] as $msg)
+                <div class="flex {{ ($msg['sender'] ?? 'bot') === 'user' ? 'justify-end' : 'justify-start' }}">
+                    <div class="max-w-[85%] p-3 rounded-2xl whitespace-pre-line {{ ($msg['sender'] ?? 'bot') === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-gray-800 border border-gray-200 shadow-sm rounded-bl-none' }}">
+                        {!! nl2br(e($msg['text'] ?? '')) !!}
                     </div>
                 </div>
             @endforeach
