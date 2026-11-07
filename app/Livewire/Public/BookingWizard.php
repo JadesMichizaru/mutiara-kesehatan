@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Livewire\Public;
 
 use App\Models\Doctor;
@@ -14,7 +13,6 @@ class BookingWizard extends Component
     public $selectedDate = '';
     public $selectedTime = '';
     public $complaint = '';
-
     public $doctors = [];
     public $availableSchedules = [];
 
@@ -40,7 +38,7 @@ class BookingWizard extends Component
         // Simpan janji temu
         $appointment = Appointment::create([
             'appointment_code' => 'APT-' . strtoupper(Str::random(6)),
-            'patient_id'       => auth()->user()?->patient?->id ?? Doctor::first()->id, // Diperbaiki: auth()->user()
+            'patient_id'       => auth()->user()?->patient?->id ?? Doctor::first()->id,
             'doctor_id'        => $this->selectedDoctor,
             'appointment_date' => $this->selectedDate,
             'appointment_time' => $this->selectedTime,
@@ -55,7 +53,6 @@ class BookingWizard extends Component
 
     public function render()
     {
-        // Diperbaiki: Mengarahkan ke komponen Blade di folder resources/views/components/public/
         return view('components.public.booking-wizard');
     }
 }

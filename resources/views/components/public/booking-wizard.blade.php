@@ -1,13 +1,3 @@
-<?php
-
-use Livewire\Component;
-
-new class extends Component
-{
-    //
-};
-?>
-
 <div x-data="{ open: false }" class="fixed bottom-5 right-5 z-50 font-sans">
     <!-- Floating Trigger Button -->
     <button @click="open = !open" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-5 rounded-full shadow-lg flex items-center gap-2 transition">
@@ -22,7 +12,6 @@ new class extends Component
          x-transition
          class="absolute bottom-16 right-0 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden"
          style="display: none;">
-
         <!-- Top Banner Header -->
         <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
             <div>

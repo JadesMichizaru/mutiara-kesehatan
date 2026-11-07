@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Livewire\Public;
 
 use App\Models\Doctor;
@@ -36,7 +35,10 @@ class ClinicLanding extends Component
         return [
             'patientName'     => 'required|min:3',
             'patientEmail'    => 'required|email',
-            'patientPhone'    => 'required|regex:/^(\+62|62|0)8[1-9][0-9]{7,10}$/',
+            'patientPhone'    => [
+                'required',
+                'regex:/^(\+62|62|0)8[1-9][0-9]{7,10}$/'
+            ],
             'appointmentDate' => 'required|date|after_or_equal:today',
             'serviceSelect'   => 'required',
             'selectedDoctor'  => 'nullable',
@@ -48,6 +50,7 @@ class ClinicLanding extends Component
         'patientName.required'     => 'Nama minimal 3 karakter',
         'patientEmail.required'    => 'Format email tidak valid',
         'patientPhone.required'    => 'Masukkan nomor WhatsApp yang valid',
+        'patientPhone.regex'       => 'Format nomor telepon tidak valid. Gunakan: 08xxxxxxxxxx',
         'appointmentDate.required' => 'Pilih tanggal kunjungan',
         'serviceSelect.required'   => 'Pilih layanan yang diinginkan',
     ];
@@ -94,6 +97,7 @@ class ClinicLanding extends Component
         if (trim($this->userMessage) === '') return;
 
         $text = $this->userMessage;
+
         $this->chatMessages[] = [
             'sender' => 'user',
             'text'   => e($text),
@@ -145,7 +149,6 @@ class ClinicLanding extends Component
 
     public function render()
     {
-        // Mendukung komponen komponen Blade Laravel
         return view('components.public.clinic-landing');
     }
 }
