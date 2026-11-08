@@ -1,315 +1,549 @@
-<!-- Font Awesome CDN resmi agar ikon tampil utuh -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
+@push('styles')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-    .rs-wizard-wrapper * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-        font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
-    }
+    .mk-booking-wizard {
+        --mk-teal: #0d9488;
+        --mk-teal-dark: #0f766e;
+        --mk-navy: #1e293b;
+        --mk-slate: #64748b;
+        --mk-light: #f8fafc;
+        --mk-white: #ffffff;
+        --mk-danger: #ef4444;
+        --mk-success: #10b981;
 
-    .rs-wizard-wrapper {
-        background-color: #f0f4f8;
-        background-image: radial-gradient(#cbd5e1 0.8px, transparent 0.8px);
-        background-size: 16px 16px;
-        min-height: 100vh;
-        padding: 40px 16px;
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-    }
-
-    .rs-container {
-        width: 100%;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        color: var(--mk-navy);
         max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .mk-card {
+        background: var(--mk-white);
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+    }
+
+    .mk-card-header {
+        background: linear-gradient(135deg, var(--mk-teal) 0%, var(--mk-navy) 100%);
+        color: var(--mk-white);
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .mk-card-header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .mk-card-header p {
+        margin: 0.5rem 0 0;
+        opacity: 0.9;
+        font-size: 0.95rem;
+    }
+
+    .mk-card-body {
+        padding: 2rem;
+    }
+
+    .mk-form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .mk-label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--mk-navy);
+        font-size: 0.9rem;
+    }
+
+    .mk-input, .mk-select, .mk-textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+        background-color: var(--mk-light);
+    }
+
+    .mk-input:focus, .mk-select:focus, .mk-textarea:focus {
+        outline: none;
+        border-color: var(--mk-teal);
+        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .mk-textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    .mk-schedule-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .mk-schedule-item {
+        position: relative;
+    }
+
+    .mk-schedule-item input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .mk-schedule-label {
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        padding: 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: var(--mk-white);
     }
 
-    .rs-header-card {
-        background: linear-gradient(135deg, #0f766e 0%, #0f172a 100%);
-        color: #ffffff;
-        border-radius: 20px;
-        padding: 26px 32px;
+    .mk-schedule-item input[type="radio"]:checked + .mk-schedule-label {
+        border-color: var(--mk-teal);
+        background-color: rgba(13, 148, 136, 0.05);
+    }
+
+    .mk-schedule-day {
+        font-weight: 700;
+        color: var(--mk-navy);
+        margin-bottom: 0.25rem;
+    }
+
+    .mk-schedule-time {
+        font-size: 0.9rem;
+        color: var(--mk-slate);
+    }
+
+    .mk-schedule-quota {
+        font-size: 0.8rem;
+        color: var(--mk-teal-dark);
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+
+    .mk-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.875rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 1rem;
+    }
+
+    .mk-btn-primary {
+        background-color: var(--mk-teal);
+        color: var(--mk-white);
+        width: 100%;
+    }
+
+    .mk-btn-primary:hover {
+        background-color: var(--mk-teal-dark);
+    }
+
+    .mk-btn-primary:disabled {
+        background-color: var(--mk-slate);
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    .mk-alert {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .mk-alert-success {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: #065f46;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .mk-alert-error {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #991b1b;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* Chatbot Widget */
+    .mk-chatbot-widget {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 9999;
+    }
+
+    .mk-chatbot-toggle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: var(--mk-teal);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        transition: transform 0.2s;
+    }
+
+    .mk-chatbot-toggle:hover {
+        transform: scale(1.05);
+    }
+
+    .mk-chatbot-window {
+        position: absolute;
+        bottom: 80px;
+        right: 0;
+        width: 350px;
+        height: 450px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        border: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .mk-chatbot-header {
+        background: var(--mk-navy);
+        color: white;
+        padding: 1rem;
+        font-weight: 600;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        box-shadow: 0 10px 25px -5px rgba(15, 118, 110, 0.25);
     }
 
-    .rs-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(8px);
-        padding: 6px 14px;
-        border-radius: 50px;
-        font-size: 12px;
-        font-weight: 600;
-        color: #5eead4;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        margin-bottom: 8px;
+    .mk-chatbot-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        background-color: #f1f5f9;
     }
 
-    .rs-header-title { font-size: 24px; font-weight: 800; color: #ffffff; }
-    .rs-header-sub { font-size: 13px; color: #94a3b8; margin-top: 4px; }
-
-    .btn-back-home {
-        background: rgba(255, 255, 255, 0.12);
-        color: #ffffff;
-        text-decoration: none;
-        padding: 10px 18px;
+    .mk-chat-message {
+        max-width: 85%;
+        padding: 0.75rem 1rem;
         border-radius: 12px;
-        font-size: 13px;
-        font-weight: 600;
-        display: inline-flex;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        word-wrap: break-word;
+    }
+
+    .mk-chat-message.bot {
+        background-color: white;
+        color: var(--mk-navy);
+        align-self: flex-start;
+        border-bottom-left-radius: 4px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .mk-chat-message.user {
+        background-color: var(--mk-teal);
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 4px;
+    }
+
+    .mk-chatbot-input-area {
+        padding: 1rem;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        gap: 0.5rem;
+        background: white;
+    }
+
+    .mk-chatbot-input {
+        flex: 1;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        outline: none;
+    }
+
+    .mk-chatbot-input:focus {
+        border-color: var(--mk-teal);
+    }
+
+    .mk-chatbot-send {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--mk-teal);
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: flex;
         align-items: center;
-        gap: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        justify-content: center;
     }
 
-    .rs-alert-success {
-        background-color: #ecfdf5; border: 1.5px solid #a7f3d0; color: #065f46;
-        padding: 16px 20px; border-radius: 16px; display: flex; align-items: center; gap: 12px;
-        font-size: 14px; font-weight: 700;
+    .mk-quick-prompts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0 1rem 1rem;
+        background: #f1f5f9;
     }
 
-    .rs-alert-error {
-        background-color: #fff1f2; border: 1.5px solid #fecdd3; color: #be123c;
-        padding: 16px 20px; border-radius: 16px; display: flex; align-items: center; gap: 12px;
-        font-size: 14px; font-weight: 700;
+    .mk-quick-btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        background: white;
+        border: 1px solid var(--mk-teal);
+        color: var(--mk-teal);
+        border-radius: 15px;
+        cursor: pointer;
+        transition: all 0.2s;
     }
 
-    .rs-form-card {
-        background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); padding: 32px;
+    .mk-quick-btn:hover {
+        background: var(--mk-teal);
+        color: white;
     }
 
-    .rs-section-title {
-        font-size: 16px; font-weight: 700; color: #1e293b; display: flex;
-        align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 2px solid #f1f5f9; margin-bottom: 20px;
+    .mk-empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: var(--mk-slate);
+        background: #f8fafc;
+        border-radius: 8px;
+        border: 1px dashed #cbd5e1;
     }
 
-    .rs-step-num {
-        width: 32px; height: 32px; background-color: #0d9488; color: #ffffff;
-        border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800;
+    @media (max-width: 640px) {
+        .mk-chatbot-window {
+            width: calc(100vw - 2rem);
+            right: -1rem;
+        }
     }
-
-    .rs-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 24px; }
-    .rs-form-group { display: flex; flex-direction: column; gap: 8px; }
-    .rs-label { font-size: 13px; font-weight: 700; color: #334155; }
-    .rs-label span.req { color: #e11d48; }
-
-    .rs-input, .rs-select, .rs-textarea {
-        width: 100%; padding: 12px 16px; border-radius: 12px; border: 1.5px solid #cbd5e1;
-        background-color: #f8fafc; font-size: 14px; color: #0f172a; outline: none;
-    }
-
-    .rs-schedule-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 8px; }
-    .rs-schedule-card {
-        display: flex; align-items: center; gap: 12px; padding: 14px 16px;
-        background-color: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; cursor: pointer; transition: all 0.2s ease;
-    }
-    .rs-schedule-card.selected { border-color: #0d9488; background-color: #f0fdf4; }
-    .rs-schedule-card input[type="radio"] { accent-color: #0d9488; width: 18px; height: 18px; }
-    .rs-schedule-time { font-size: 13px; font-weight: 700; color: #0f172a; }
-    .rs-schedule-sub { font-size: 12px; color: #64748b; }
-
-    .rs-empty-schedule {
-        background-color: #f8fafc; border: 2px dashed #cbd5e1; padding: 24px;
-        border-radius: 14px; text-align: center; color: #64748b; font-size: 13px;
-    }
-
-    .rs-submit-wrapper { display: flex; justify-content: flex-end; margin-top: 28px; }
-    .btn-rs-submit {
-        background-color: #0d9488; color: #ffffff; font-size: 14px; font-weight: 700;
-        padding: 14px 28px; border-radius: 12px; border: none; cursor: pointer;
-        display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 4px 14px rgba(13, 148, 136, 0.3);
-    }
-    .rs-error { color: #e11d48; font-size: 12px; font-weight: 600; }
-
-    /* Floating Chatbot Widget */
-    .rs-chatbot-trigger {
-        position: fixed; bottom: 24px; right: 24px; z-index: 999;
-        background-color: #0f766e; color: white; border: none; padding: 14px 22px;
-        border-radius: 50px; font-weight: 700; font-size: 14px; box-shadow: 0 10px 25px -5px rgba(15, 118, 110, 0.4);
-        cursor: pointer; display: flex; align-items: center; gap: 10px;
-    }
-    .rs-chatbot-window {
-        position: fixed; bottom: 84px; right: 24px; width: 360px;
-        background-color: #ffffff; border-radius: 20px; box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.15);
-        border: 1px solid #e2e8f0; overflow: hidden; z-index: 999;
-    }
-    .chat-scroll-area { padding: 16px; height: 280px; overflow-y: auto; background-color: #f8fafc; display: flex; flex-direction: column; gap: 10px; }
 </style>
+@endpush
 
-<div class="rs-wizard-wrapper">
-    <div class="rs-container">
-
-        <!-- Banner Header RS -->
-        <div class="rs-header-card">
-            <div>
-                <div class="rs-badge">
-                    <i class="fa-solid fa-hospital"></i> PORTAL RESERVASI JANJI TEMU MEDIS
-                </div>
-                <h1 class="rs-header-title">Konfirmasi & Detail Pendaftaran</h1>
-                <p class="rs-header-sub">Lengkapi jadwal serta konfirmasi data medis pasien sebelum diterbitkan nomor antrean.</p>
-            </div>
-            <a href="/" class="btn-back-home">
-                <i class="fa-solid fa-arrow-left"></i> Beranda
-            </a>
+<div class="mk-booking-wizard" x-data="chatbotWidget()">
+    <div class="mk-card">
+        <div class="mk-card-header">
+            <h2><i class="fa-solid fa-calendar-check"></i> PORTAL RESERVASI JANJI TEMU MEDIS</h2>
+            <p>Konfirmasi & Detail Pendaftaran<br>Lengkapi jadwal serta konfirmasi data medis pasien sebelum diterbitkan nomor antrean.</p>
         </div>
 
-        <!-- Flash Notifikasi Sukses -->
-        @if ($successMessage || session()->has('message'))
-            <div class="rs-alert-success">
-                <i class="fa-solid fa-circle-check" style="font-size: 20px;"></i>
-                <div>{{ $successMessage ?: session('message') }}</div>
-            </div>
-        @endif
+        <div class="mk-card-body">
+            @if (session()->has('successMessage'))
+                <div class="mk-alert mk-alert-success">
+                    <i class="fa-solid fa-circle-check fa-lg"></i>
+                    <span>{{ session('successMessage') }}</span>
+                </div>
+            @endif
 
-        <!-- Flash Notifikasi Error -->
-        @if ($errorMessage)
-            <div class="rs-alert-error">
-                <i class="fa-solid fa-circle-exclamation" style="font-size: 20px;"></i>
-                <div>{{ $errorMessage }}</div>
-            </div>
-        @endif
+            @if (session()->has('errorMessage'))
+                <div class="mk-alert mk-alert-error">
+                    <i class="fa-solid fa-circle-exclamation fa-lg"></i>
+                    <span>{{ session('errorMessage') }}</span>
+                </div>
+            @endif
 
-        <!-- Form Card Utama -->
-        <div class="rs-form-card">
-            <form wire:submit.prevent="submitBooking">
+            <!-- FORM BOOKING - HANYA untuk reservasi -->
+            <form wire:submit="submitBooking">
+                <div class="mk-form-group">
+                    <label class="mk-label">1. PILIH DOKTER SPESIALIS *</label>
+                    <select wire:model.live="selectedDoctor" class="mk-select">
+                        <option value="">-- Pilih Dokter --</option>
+                        @foreach($doctors as $doc)
+                            <option value="{{ $doc->id }}">
+                                {{ $doc->user->name ?? 'Dokter Tanpa Nama' }} ({{ $doc->specialization ?? 'Dokter Spesialis' }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('selectedDoctor') <span style="color: var(--mk-danger); font-size: 0.85rem;">{{ $message }}</span> @enderror
+                </div>
 
-                <!-- Section 1 -->
-                <div style="margin-bottom: 28px;">
-                    <div class="rs-section-title">
-                        <span class="rs-step-num">1</span>
-                        <span>Pilih Dokter & Waktu Praktik</span>
-                    </div>
+                <div class="mk-form-group">
+                    <label class="mk-label">TANGGAL KUNJUNGAN *</label>
+                    <input type="date" wire:model.live="selectedDate" class="mk-input">
+                    @error('selectedDate') <span style="color: var(--mk-danger); font-size: 0.85rem;">{{ $message }}</span> @enderror
+                </div>
 
-                    <div class="rs-form-grid">
-                        <div class="rs-form-group">
-                            <label class="rs-label">Dokter Spesialis <span class="req">*</span></label>
-                            <select wire:model.live="selectedDoctor" class="rs-select">
-                                <option value="">-- Pilih Dokter --</option>
-                                @foreach($doctors as $doc)
-                                    <option value="{{ $doc->id }}">{{ $doc->user->name ?? $doc->name }} ({{ $doc->specialty ?? $doc->specialization ?? 'Dokter Spesialis' }})</option>
-                                @endforeach
-                            </select>
-                            @error('selectedDoctor') <span class="rs-error">{{ $message }}</span> @enderror
-                        </div>
-
-                        <div class="rs-form-group">
-                            <label class="rs-label">Tanggal Kunjungan <span class="req">*</span></label>
-                            <input type="date" wire:model="selectedDate" class="rs-input">
-                            @error('selectedDate') <span class="rs-error">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
-
-                    <!-- Direct DoctorSchedule Selection -->
-                    <div class="rs-form-group">
-                        <label class="rs-label">Jadwal Praktik Dokter Available (Tabel DoctorSchedule) <span class="req">*</span></label>
-                        @if(count($availableSchedule) > 0)
-                            <div class="rs-schedule-grid">
-                                @foreach($availableSchedule as $sch)
-                                    <label class="rs-schedule-card {{ $selectedTime == ($sch->start_time . ' - ' . $sch->end_time) ? 'selected' : '' }}">
-                                        <input type="radio" wire:model="selectedTime" value="{{ $sch->start_time }} - {{ $sch->end_time }}">
-                                        <div>
-                                            <div class="rs-schedule-time">{{ $sch->day_of_week ?? $sch->day }}</div>
-                                            <div class="rs-schedule-sub">
-                                                <i class="fa-regular fa-clock"></i> {{ $sch->start_time }} - {{ $sch->end_time }} WIB
-                                                @if(isset($sch->quota))
-                                                    <span style="font-size: 11px; color: #0d9488; font-weight: 700;">(Kuota: {{ $sch->quota }})</span>
-                                                @endif
-                                            </div>
-                                        </div>
+                <div class="mk-form-group">
+                    <label class="mk-label">JADWAL PRAKTIK DOKTER TERSEDIA *</label>
+                    @if($resolvedDoctorId && count($availableSchedule) > 0)
+                        <div class="mk-schedule-grid">
+                            @foreach($availableSchedule as $sch)
+                                <div class="mk-schedule-item">
+                                    <input type="radio"
+                                           id="schedule_{{ $sch->id }}"
+                                           wire:model="selectedScheduleId"
+                                           value="{{ $sch->id }}">
+                                    <label for="schedule_{{ $sch->id }}" class="mk-schedule-label">
+                                        <span class="mk-schedule-day">
+                                            <i class="fa-regular fa-calendar"></i> {{ $sch->day_of_week }}
+                                        </span>
+                                        <span class="mk-schedule-time">
+                                            <i class="fa-regular fa-clock"></i> {{ $sch->start_time }} - {{ $sch->end_time }} WIB
+                                        </span>
+                                        @if(isset($sch->quota))
+                                            <span class="mk-schedule-quota">
+                                                <i class="fa-solid fa-users"></i> Kuota: {{ $sch->quota }}
+                                            </span>
+                                        @endif
                                     </label>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="rs-empty-schedule">
-                                <i class="fa-solid fa-calendar-xmark" style="font-size: 26px; margin-bottom: 8px; color: #94a3b8;"></i><br>
-                                {{ $selectedDoctor ? 'Belum ada jadwal praktik terdaftar pada tabel DoctorSchedule untuk dokter ini.' : 'Silakan pilih dokter terlebih dahulu untuk menampilkan data jadwal.' }}
-                            </div>
-                        @endif
-                        @error('selectedTime') <span class="rs-error">{{ $message }}</span> @enderror
-                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @elseif($resolvedDoctorId)
+                        <div class="mk-empty-state">
+                            <i class="fa-regular fa-calendar-xmark fa-2x" style="margin-bottom: 0.5rem;"></i>
+                            <p>Belum ada jadwal praktik terdaftar untuk dokter ini.</p>
+                        </div>
+                    @else
+                        <div class="mk-empty-state">
+                            <p>Silakan pilih dokter terlebih dahulu untuk menampilkan data jadwal.</p>
+                        </div>
+                    @endif
+                    @error('selectedScheduleId') <span style="color: var(--mk-danger); font-size: 0.85rem;">{{ $message }}</span> @enderror
                 </div>
 
-                <!-- Section 2 -->
-                <div>
-                    <div class="rs-section-title">
-                        <span class="rs-step-num">2</span>
-                        <span>Keluhan & Catatan Medis Pasien</span>
-                    </div>
-
-                    <div class="rs-form-group">
-                        <label class="rs-label">Keluhan Utama / Gejala</label>
-                        <textarea wire:model="complaint" rows="3" class="rs-textarea" placeholder="Jelaskan keluhan singkat Anda..."></textarea>
-                        @error('complaint') <span class="rs-error">{{ $message }}</span> @enderror
-                    </div>
+                <div class="mk-form-group">
+                    <label class="mk-label">2. KELUHAN & CATATAN MEDIS PASIEN *</label>
+                    <textarea wire:model="complaint" class="mk-textarea" placeholder="Jelaskan keluhan utama atau gejala yang dialami..."></textarea>
+                    @error('complaint') <span style="color: var(--mk-danger); font-size: 0.85rem;">{{ $message }}</span> @enderror
                 </div>
 
-                <!-- Tombol Submit -->
-                <div class="rs-submit-wrapper">
-                    <button type="submit" class="btn-rs-submit">
-                        <i class="fa-solid fa-circle-check"></i>
-                        <span>Konfirmasi & Buat Janji Temu</span>
-                    </button>
-                </div>
-
+                <button type="submit" class="mk-btn mk-btn-primary" wire:loading.attr="disabled">
+                    <span wire:loading.remove><i class="fa-solid fa-paper-plane"></i> Konfirmasi & Buat Janji Temu</span>
+                    <span wire:loading><i class="fa-solid fa-circle-notch fa-spin"></i> Memproses...</span>
+                </button>
             </form>
-        </div>
+            <!-- AKHIR FORM BOOKING -->
 
+        </div>
     </div>
 
-    <!-- Floating Chatbot Widget -->
-    <div x-data="{ open: false }">
-        <button @click="open = !open" class="rs-chatbot-trigger">
-            <i class="fa-solid fa-comments"></i>
-            <span>Tanya Jadwal</span>
-        </button>
+    <!-- CHATBOT WIDGET - TERPISAH dari form -->
+    <div class="mk-chatbot-widget">
+        <div class="mk-chatbot-window" x-show="open"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+             x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+             style="display: none;">
 
-        <div x-show="open" x-transition class="rs-chatbot-window" style="display: none;">
-            <div style="background-color: #0f172a; color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <i class="fa-solid fa-robot" style="color: #5eead4; font-size: 18px;"></i>
-                    <div>
-                        <h4 style="font-size: 13px; font-weight: 700;">Bot Informasi Dokter</h4>
-                        <p style="font-size: 11px; color: #94a3b8;">Respon Otomatis Sistem</p>
-                    </div>
-                </div>
-                <button @click="open = false" style="background: none; border: none; color: white; font-weight: bold; cursor: pointer; font-size: 18px;">×</button>
-            </div>
-
-            <div class="chat-scroll-area">
-                @foreach($messages ?? [] as $msg)
-                    <div style="display: flex; justify-content: {{ ($msg['sender'] ?? 'bot') === 'user' ? 'flex-end' : 'flex-start' }};">
-                        <div style="max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 12px; line-height: 1.4; {{ ($msg['sender'] ?? 'bot') === 'user' ? 'background-color: #0d9488; color: white;' : 'background-color: white; color: #1e293b; border: 1px solid #e2e8f0;' }}">
-                            {!! nl2br(e($msg['text'] ?? '')) !!}
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-
-            <div style="padding: 8px; background: white; border-top: 1px solid #e2e8f0; display: flex; gap: 6px; overflow-x: auto;">
-                <button type="button" wire:click="quickPrompt('jadwal dokter hari ini')" style="white-space: nowrap; background-color: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4; padding: 6px 12px; border-radius: 50px; font-size: 11px; font-weight: 600; cursor: pointer;">
-                    <i class="fa-regular fa-calendar-check"></i> Jadwal Dokter
-                </button>
-                <button type="button" wire:click="quickPrompt('biaya berobat')" style="white-space: nowrap; background-color: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 50px; font-size: 11px; font-weight: 600; cursor: pointer;">
-                    <i class="fa-solid fa-money-bill-wave"></i> Biaya Berobat
+            <div class="mk-chatbot-header">
+                <span><i class="fa-solid fa-robot"></i> Bot Informasi Dokter</span>
+                <button @click="open = false" style="background: none; border: none; color: white; cursor: pointer;">
+                    <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
-            <form wire:submit.prevent="sendMessage" style="padding: 10px; background-color: white; border-top: 1px solid #e2e8f0; display: flex; gap: 8px;">
-                <input type="text" wire:model="userMessage" placeholder="Ketik pertanyaan..." style="flex: 1; font-size: 12px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 10px; outline: none;">
-                <button type="submit" style="background-color: #0d9488; color: white; border: none; padding: 8px 14px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+            <div class="mk-chatbot-messages" x-ref="chatContainer">
+                <template x-for="(msg, index) in messages" :key="index">
+                    <div class="mk-chat-message" :class="msg.sender === 'bot' ? 'bot' : 'user'">
+                        <span x-html="msg.text"></span>
+                    </div>
+                </template>
+            </div>
+
+            <div class="mk-quick-prompts">
+                <button type="button" class="mk-quick-btn" @click="quickPrompt('Lihat jadwal dokter')">Lihat Jadwal</button>
+                <button type="button" class="mk-quick-btn" @click="quickPrompt('Berapa biaya berobat?')">Biaya Berobat</button>
+                <button type="button" class="mk-quick-btn" @click="quickPrompt('Cara batal reservasi')">Batal Reservasi</button>
+            </div>
+
+            <div class="mk-chatbot-input-area">
+                <input type="text"
+                       class="mk-chatbot-input"
+                       placeholder="Ketik pesan Anda..."
+                       x-model="input"
+                       @keydown.enter.prevent="sendMessage()">
+                <button type="button" class="mk-chatbot-send" @click="sendMessage()">
                     <i class="fa-solid fa-paper-plane"></i>
                 </button>
-            </form>
+            </div>
         </div>
+
+        <button type="button" class="mk-chatbot-toggle" @click="open = !open">
+            <i class="fa-solid" :class="open ? 'fa-xmark' : 'fa-comments'"></i>
+        </button>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    function chatbotWidget() {
+        return {
+            open: false,
+            messages: @json($chatMessages),
+            input: '',
+
+            init() {
+                this.$nextTick(() => {
+                    this.scrollToBottom();
+                });
+
+                // Listen untuk event scroll dari Livewire
+                this.$wire.on('scroll-chat-to-bottom', () => {
+                    this.$nextTick(() => {
+                        this.scrollToBottom();
+                    });
+                });
+            },
+
+            sendMessage() {
+                if (!this.input.trim()) return;
+
+                // Tampilkan pesan user di UI
+                this.messages.push({ sender: 'user', text: this.input });
+                const userText = this.input;
+                this.input = '';
+
+                this.$nextTick(() => {
+                    this.scrollToBottom();
+                });
+
+                // Panggil method Livewire KHUSUS untuk chatbot
+                this.$wire.sendChatMessage();
+            },
+
+            quickPrompt(text) {
+                // Panggil method Livewire untuk quick prompt
+                this.$wire.quickPrompt(text);
+            },
+
+            scrollToBottom() {
+                const container = this.$refs.chatContainer;
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            }
+        }
+    }
+</script>
+@endpush

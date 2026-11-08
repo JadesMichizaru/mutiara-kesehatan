@@ -5,185 +5,186 @@ namespace App\Livewire\Public;
 use App\Models\Doctor;
 use App\Models\DoctorSchedule;
 use App\Models\Appointment;
-use Livewire\Component;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
-use Throwable;
+use Livewire\Component;
 
 class BookingWizard extends Component
 {
-    // Form Inputs
-    public $selectedDoctor = null; // Bisa berisi Doctor ID atau User ID
+    public $doctors;
+    public $selectedDoctor = '';
+    public $resolvedDoctorId = null;
     public $selectedDate = '';
-    public $selectedTime = '';
+    public $selectedScheduleId = '';
     public $complaint = '';
-
-    // Data Collections
-    public $doctors = [];
     public $availableSchedule = [];
 
-    // Notifications
-    public $successMessage = '';
-    public $errorMessage = '';
-
-    // Chatbot States
-    public $messages = [];
-    public $userMessage = '';
+    // Chatbot Properties
+    public $chatOpen = false;
+    public $chatMessages = [];
+    public $chatInput = '';
 
     public function mount()
     {
-        // 1. Load Data Dokter beserta relasi User
         $this->doctors = Doctor::with('user')->get();
 
-        // 2. Tangkap Query Parameters dari URL (Landing Page)
-        $doctorIdParam = request()->query('doctor_id');
-        $date = request()->query('date');
-        $notes = request()->query('notes');
-
-        if ($date) {
-            $this->selectedDate = $date;
-        }
-
-        if ($notes) {
-            $this->complaint = $notes;
-        }
-
-        if ($doctorIdParam) {
-            $this->resolveAndLoadDoctor($doctorIdParam);
-        }
-
-        // 3. Pesan Awal Chatbot
-        $this->messages = [
-            [
-                'sender' => 'bot',
-                'text'   => "Halo! 👋 Selamat datang di Booking Wizard Klinik MutiaraKesehatan.\nAda yang bisa kami bantu terkait jadwal dokter atau konfirmasi janji temu?"
-            ]
+        $this->chatMessages = [
+            ['sender' => 'bot', 'text' => 'Halo! Selamat datang di MutiaraKesehatan. Silakan pilih dokter di formulir, lalu tanyakan saya tentang <b>Jadwal Dokter</b>, <b>Biaya</b>, atau <b>Cara Batal</b>.']
         ];
     }
 
     public function updatedSelectedDoctor($value)
     {
-        $this->resolveAndLoadDoctor($value);
-    }
+        $this->reset(['selectedScheduleId', 'availableSchedule']);
 
-    /**
-     * Resolusi ID: Memastikan ID yang diproses adalah Doctor ID (bukan User ID)
-     * Rantai Relasi: DoctorSchedule -> doctor_id -> Doctor -> user_id -> User
-     */
-    private function resolveAndLoadDoctor($idInput)
-    {
-        $this->selectedTime = '';
-
-        if (!$idInput) {
-            $this->availableSchedule = [];
+        if (empty($value)) {
+            $this->resolvedDoctorId = null;
             return;
         }
 
-        // 1. Cek apakah ID input adalah Primary Key dari tabel Doctor
-        $doctor = Doctor::find($idInput);
-
-        // 2. Jika tidak ditemukan, cari apakah ID input adalah user_id di tabel Doctor
-        if (!$doctor) {
-            $doctor = Doctor::where('user_id', $idInput)->first();
-        }
+        // Resolusi ID: Cek apakah value adalah doctor_id atau user_id
+        $doctor = Doctor::where('id', $value)
+            ->orWhereHas('user', function ($query) use ($value) {
+                $query->where('id', $value);
+            })->first();
 
         if ($doctor) {
-            // Set selectedDoctor ke ID Doctor yang valid
-            $this->selectedDoctor = $doctor->id;
-
-            // Ambil jadwal langsung dari DoctorSchedule menggunakan Doctor ID
-            $this->availableSchedule = DoctorSchedule::where('doctor_id', $doctor->id)->get();
+            $this->resolvedDoctorId = $doctor->id;
+            $this->loadSchedules();
         } else {
+            $this->resolvedDoctorId = null;
             $this->availableSchedule = [];
         }
     }
 
+    public function loadSchedules()
+    {
+        if (!$this->resolvedDoctorId) return;
+
+        $this->availableSchedule = DoctorSchedule::where('doctor_id', $this->resolvedDoctorId)
+            ->orderByRaw("CASE day_of_week
+                WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3
+                WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6 WHEN 'Sunday' THEN 7
+            END")
+            ->get();
+    }
+
+    // METHOD UNTUK FORM BOOKING (hanya dipanggil saat submit form)
     public function submitBooking()
     {
-        $this->resetErrorBag();
-        $this->successMessage = '';
-        $this->errorMessage = '';
-
         $this->validate([
-            'selectedDoctor' => 'required',
-            'selectedDate'   => 'required|date|after_or_equal:today',
-            'selectedTime'   => 'required',
-            'complaint'      => 'nullable|string|max:500',
-        ], [
-            'selectedDoctor.required' => 'Dokter spesialis wajib dipilih.',
-            'selectedDate.required'   => 'Tanggal kunjungan wajib diisi.',
-            'selectedDate.after_or_equal' => 'Tanggal kunjungan tidak boleh lewat dari hari ini.',
-            'selectedTime.required'   => 'Silakan pilih salah satu jadwal praktik yang tersedia.',
+            'selectedDoctor' => 'required|exists:doctors,id',
+            'selectedScheduleId' => 'required|exists:doctor_schedule,id',
+            'complaint' => 'required|string|min:10',
         ]);
 
         try {
-            // Resolusi ulang untuk memastikan Doctor ID yang disimpan ke tabel appointments valid
-            $doctor = Doctor::find($this->selectedDoctor) ?? Doctor::where('user_id', $this->selectedDoctor)->first();
+            DB::beginTransaction();
 
-            if (!$doctor) {
-                $this->errorMessage = 'Data dokter tidak ditemukan dalam sistem.';
-                return;
-            }
+            $bookingCode = 'APT-' . strtoupper(Str::random(6));
+            $userId = Auth::id() ?: null;
 
-            // Simpan data reservasi ke tabel appointments
-            $appointment = Appointment::create([
-                'appointment_code' => 'APT-' . strtoupper(Str::random(6)),
-                'patient_id'        => auth()->user()?->patient?->id ?? auth()->id(),
-                'doctor_id'         => $doctor->id, // Menggunakan ID dari tabel Doctors
-                'appointment_date' => $this->selectedDate,
-                'appointment_time' => $this->selectedTime,
-                'booking_source'    => 'web',
-                'status'            => 'pending',
-                'complaint'         => $this->complaint,
+            Appointment::create([
+                'user_id'       => $userId,
+                'doctor_id'     => $this->resolvedDoctorId,
+                'schedule_id'   => $this->selectedScheduleId,
+                'complaint'     => $this->complaint,
+                'booking_code'  => $bookingCode,
+                'status'        => 'pending',
+                'appointment_date' => $this->selectedDate ?: now()->toDateString(),
             ]);
 
-            $this->successMessage = 'Janji temu sudah di reservasi! Kode Booking Anda: ' . $appointment->appointment_code;
-            session()->flash('message', $this->successMessage);
+            DB::commit();
+            Session::flash('successMessage', "Janji temu sudah di reservasi! Kode Booking Anda: {$bookingCode}");
 
-            // Reset pilihan jam & keluhan
-            $this->reset(['selectedTime', 'complaint']);
+            $this->reset(['selectedDoctor', 'resolvedDoctorId', 'selectedDate', 'selectedScheduleId', 'complaint', 'availableSchedule']);
 
-        } catch (Throwable $e) {
-            $this->errorMessage = 'Gagal menyimpan reservasi: ' . $e->getMessage();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Session::flash('errorMessage', 'Gagal melakukan reservasi: ' . $e->getMessage());
         }
     }
 
-    // Interactive Chatbot Handlers
-    public function sendMessage()
+    // METHOD KHUSUS CHATBOT (TERPISAH dari submitBooking)
+    public function sendChatMessage()
     {
-        $msg = trim($this->userMessage);
-        if ($msg === '') return;
+        if (empty(trim($this->chatInput))) return;
 
-        $this->messages[] = [
-            'sender' => 'user',
-            'text'   => $msg
-        ];
+        // Simpan pesan user
+        $userMessage = trim($this->chatInput);
+        $this->chatMessages[] = ['sender' => 'user', 'text' => $userMessage];
 
-        $input = strtolower($msg);
-        $this->userMessage = '';
+        $userText = strtolower($userMessage);
+        $this->chatInput = ''; // Kosongkan input
 
-        if (str_contains($input, 'jadwal') || str_contains($input, 'dokter')) {
-            $reply = "👨‍⚕️ Jadwal praktik dokter yang tersedia dapat Anda pilih langsung pada form langkah 1.";
-        } elseif (str_contains($input, 'biaya') || str_contains($input, 'tarif')) {
-            $reply = "💰 Estimasi biaya konsultasi spesialis berkisar antara Rp 150.000 - Rp 300.000 (Menerima BPJS & Asuransi).";
-        } else {
-            $reply = "Terima kasih atas pertanyaan Anda. Silakan lanjutkan pengisian form pendaftaran janji temu.";
-        }
+        // Dispatch event untuk auto-scroll
+        $this->dispatch('scroll-chat-to-bottom');
 
-        $this->messages[] = [
-            'sender' => 'bot',
-            'text'   => $reply
-        ];
+        // Logika respon chatbot
+        $response = $this->generateBotResponse($userText);
+
+        // Simpan respon bot
+        $this->chatMessages[] = ['sender' => 'bot', 'text' => $response];
     }
 
-    public function quickPrompt($prompt)
+    // Method untuk quick prompt
+    public function quickPrompt($text)
     {
-        $this->userMessage = $prompt;
-        $this->sendMessage();
+        $this->chatMessages[] = ['sender' => 'user', 'text' => $text];
+        $this->dispatch('scroll-chat-to-bottom');
+
+        $userText = strtolower($text);
+        $response = $this->generateBotResponse($userText);
+
+        $this->chatMessages[] = ['sender' => 'bot', 'text' => $response];
+    }
+
+    // Method untuk generate response bot
+    private function generateBotResponse($userText)
+    {
+        if (str_contains($userText, 'jadwal') || str_contains($userText, 'praktik')) {
+            if ($this->resolvedDoctorId) {
+                $doctor = Doctor::with('user')->find($this->resolvedDoctorId);
+                $doctorName = $doctor->user->name ?? 'Dokter Terkait';
+                $schedules = DoctorSchedule::where('doctor_id', $this->resolvedDoctorId)->get();
+
+                if ($schedules->isEmpty()) {
+                    return "Dokter <b>{$doctorName}</b> belum memiliki jadwal praktik yang terdaftar di sistem saat ini.";
+                } else {
+                    $response = "Jadwal praktik <b>{$doctorName}</b>:<br>";
+                    foreach ($schedules as $sch) {
+                        $response .= "• <b>{$sch->day_of_week}</b>: {$sch->start_time} - {$sch->end_time} (Kuota: {$sch->quota})<br>";
+                    }
+                    return $response;
+                }
+            } else {
+                return "Silakan <b>pilih dokter terlebih dahulu</b> pada formulir di atas, agar saya dapat menampilkan jadwal praktik yang spesifik untuk dokter tersebut.";
+            }
+        }
+        elseif (str_contains($userText, 'biaya') || str_contains($userText, 'harga') || str_contains($userText, 'berobat')) {
+            if ($this->resolvedDoctorId) {
+                $doctor = Doctor::find($this->resolvedDoctorId);
+                $fee = number_format($doctor->consultation_fee ?? 150000, 0, ',', '.');
+                return "Biaya konsultasi untuk dokter ini adalah sekitar <b>Rp {$fee}</b>. Biaya dapat berubah tergantung tindakan medis yang diperlukan.";
+            } else {
+                return "Biaya konsultasi bervariasi tergantung spesialisasi dokter. Silakan pilih dokter di formulir untuk melihat estimasi biaya (umumnya Rp 150.000 - Rp 300.000).";
+            }
+        }
+        elseif (str_contains($userText, 'batal') || str_contains($userText, 'cancel') || str_contains($userText, 'reservasi')) {
+            return "Untuk membatalkan reservasi:<br>1. Hubungi administrasi kami melalui WhatsApp<br>2. Atau batalkan melalui menu 'Riwayat Janji Temu' jika Anda sudah login<br><br>Batas pembatalan: minimal 24 jam sebelum jadwal.";
+        }
+        elseif (str_contains($userText, 'halo') || str_contains($userText, 'hi') || str_contains($userText, 'assalamualaikum')) {
+            return "Halo! Ada yang bisa saya bantu? Silakan tanyakan tentang:<br>• Jadwal dokter<br>• Biaya konsultasi<br>• Cara pembatalan";
+        }
+        else {
+            return "Terima kasih atas pesan Anda. Untuk informasi lebih lanjut:<br>• Ketik <b>'jadwal'</b> untuk melihat jadwal dokter<br>• Ketik <b>'biaya'</b> untuk informasi biaya<br>• Ketik <b>'batal'</b> untuk cara pembatalan";
+        }
     }
 
     public function render()
     {
-        return view('components.public.booking-wizard')
-            ->layout('layouts.app');
+        return view('components.public.booking-wizard')->layout('layouts.app');
     }
 }
