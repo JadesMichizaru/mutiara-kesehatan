@@ -20,7 +20,9 @@ use App\Models\Appointment;
 
 // Halaman Utama / Landing Page
 Route::get('/', ClinicLanding::class)->name('index');
-Route::get('/wizard-booking', BookingWizard::class)->name('booking-wizard');
+
+// ATAU jika booking-wizard adalah komponen Livewire:
+Route::get('/booking-wizard', \App\Livewire\Public\BookingWizard::class)->name('booking-wizard');
 
 // Halaman Form Login
 Route::get('/login', function () {

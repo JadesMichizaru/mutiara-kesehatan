@@ -17,6 +17,10 @@ return new class extends Migration
             $table->string('str_number')->unique();
             $table->string('specialization');
             $table->decimal('consultation_fee', 12,2);
+            $table->boolean('is_avalaible')->default(true);
+            $table->string('almameter');
+            $table->string('education');
+            $table->string('photo');
             $table->timestamps();
         });
     }

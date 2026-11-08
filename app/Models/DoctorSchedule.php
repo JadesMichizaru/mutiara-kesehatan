@@ -11,6 +11,8 @@ class DoctorSchedule extends Model
 {
     use HasFactory, HasUuids;
 
+
+    protected $table = 'doctor_schedule';
     protected $keyType = 'string';
     public $incrementing = false;
 
@@ -25,4 +27,6 @@ class DoctorSchedule extends Model
     public function doctor(): BelongsTo {
         return $this->belongsTo(Doctor::class, 'doctor_id');
     }
+
+    protected $guarded = [];
 }

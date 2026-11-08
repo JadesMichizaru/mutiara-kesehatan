@@ -406,7 +406,7 @@
                     <div class="doctor-card" data-aos="fade-up" data-aos-delay="{{ ($index % 4 + 1) * 100 }}" data-aos-duration="750">
                         <div class="doctor-image">
                             @if(isset($doctor->photo) && $doctor->photo)
-                                <img src="{{ asset('storage/' . $doctor->photo) }}" alt="{{ $doctor->name }}" class="doctor-img-fluid">
+                                <img src="{{ asset('storage/' . $doctor->photo) }}" alt="{{ $doctor->user->name ?? $doctor->name }}" class="doctor-img-fluid">
                             @else
                                 <div class="doctor-photo-placeholder">
                                     <i class="fas fa-user-md"></i>
@@ -418,7 +418,7 @@
                             </div>
                         </div>
                         <div class="doctor-info">
-                            <h3 class="doctor-name">{{ $doctor->name }}</h3>
+                            <h3 class="doctor-name">{{ $doctor->user->name ?? $doctor->name }}</h3>
                             <p class="doctor-specialty">{{ $doctor->specialty ?? $doctor->specialization ?? 'Dokter Spesialis' }}</p>
                             <div class="doctor-details">
                                 <div class="detail-item">
@@ -433,8 +433,8 @@
                             <div class="doctor-schedule">
                                 <span class="schedule-label">Jadwal Praktik:</span>
                                 <div class="schedule-days">
-                                    @if(isset($doctor->schedules) && is_array($doctor->schedules))
-                                        @foreach($doctor->schedules as $day)
+                                    @if(isset($doctor->doctor_schedule->schedule) && is_array($doctor->schedule))
+                                        @foreach($doctor->schedule as $day)
                                             <span class="day-badge">{{ $day }}</span>
                                         @endforeach
                                     @else
@@ -445,7 +445,7 @@
                                 </div>
                                 <span class="schedule-time">{{ $doctor->practice_hours ?? '08:00 - 16:00 WIB' }}</span>
                             </div>
-                            <a href="#janji" onclick="selectDoctorForBooking('{{ $doctor->id ?? $doctor->name }}')" class="btn btn-primary btn-sm">
+                            <a href="#janji" onclick="selectDoctorForBooking('{{ $doctor->id ?? ($doctor->user->name ?? $doctor->name) }}')" class="btn btn-primary btn-sm">
                                 <i class="fas fa-calendar-check"></i> Buat Janji
                             </a>
                         </div>
@@ -538,7 +538,7 @@
                                 <select id="doctorSelect" name="doctor_id" class="form-input form-select">
                                     <option value="">-- Pilih Dokter --</option>
                                     @foreach($doctors ?? [] as $doc)
-                                        <option value="{{ $doc->id }}">{{ $doc->name }}</option>
+                                        <option value="{{ $doc->id }}">{{ $doc->user->name ?? $doc->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -651,95 +651,3 @@
         </div>
     </div>
 </div>
-
-<!-- ================= JAVASCRIPT LOGIC ================= -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // 1. Inisialisasi AOS (Animate On Scroll)
-        if (typeof AOS !== 'undefined') {
-            AOS.init({
-                once: true,
-                duration: 750,
-                easing: 'ease-out-cubic',
-                offset: 100
-            });
-        }
-
-        // 2. Logic Mobile Drawer Toggle (Vanilla JS)
-        const mobileToggle = document.getElementById('mobileToggle');
-        const mobileDrawer = document.getElementById('mobileDrawer');
-        const mobileOverlay = document.getElementById('mobileOverlay');
-        const drawerCloseBtn = document.getElementById('drawerCloseBtn');
-
-        function openMobileMenu() {
-            if (mobileDrawer && mobileOverlay && mobileToggle) {
-                mobileDrawer.classList.add('active');
-                mobileOverlay.classList.add('active');
-                mobileToggle.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            }
-        }
-
-        function closeMobileMenu() {
-            if (mobileDrawer && mobileOverlay && mobileToggle) {
-                mobileDrawer.classList.remove('active');
-                mobileOverlay.classList.remove('active');
-                mobileToggle.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-        }
-
-        if (mobileToggle) mobileToggle.addEventListener('click', openMobileMenu);
-        if (mobileOverlay) mobileOverlay.addEventListener('click', closeMobileMenu);
-        if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeMobileMenu);
-
-        // 3. User Dropdown Toggle (Desktop)
-        const dropdownContainer = document.getElementById('userDropdownContainer');
-        const dropdownBtn = document.getElementById('userDropdownBtn');
-        if (dropdownContainer && dropdownBtn) {
-            dropdownBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                dropdownContainer.classList.toggle('active');
-            });
-            document.addEventListener('click', function(e) {
-                if (!dropdownContainer.contains(e.target)) {
-                    dropdownContainer.classList.remove('active');
-                }
-            });
-        }
-
-        //4. Submit Form -> Redireksi ke Booking Wizard
-        const form = document.getElementById('appointmentForm');
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-
-                const name = document.getElementById('patientName').value;
-                const email = document.getElementById('patientEmail').value;
-                const phone = document.getElementById('patientPhone').value;
-                const date = document.getElementById('appointmentDate').value;
-                const service = document.getElementById('serviceSelect').value;
-
-                if (!name || !email || !phone || !date || !service) {
-                    alert('Mohon lengkapi semua kolom bertanda bintang (*) sebelum melanjutkan.');
-                    return;
-                }
-
-                const formData = new FormData(form);
-                const params = new URLSearchParams(formData).toString();
-
-                // 💡 Menggunakan helper route() Laravel langsung agar URL selalu akurat
-                const targetUrl = "{{ route('booking-wizard') }}";
-
-                window.location.href = targetUrl + "?" + params;
-            });
-        }
-    });
-
-    function selectDoctorForBooking(doctorId) {
-        const doctorSelect = document.getElementById('doctorSelect');
-        if (doctorSelect) {
-            doctorSelect.value = doctorId;
-        }
-    }
-</script>

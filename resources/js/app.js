@@ -843,16 +843,52 @@ function initScrollTop() {
 // ============================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    // --- DESKTOP USER DROPDOWN ---
+    // 1. Inisialisasi AOS (Animate On Scroll)
+    if (typeof AOS !== 'undefined') {
+        AOS.init({
+            once: true,
+            duration: 750,
+            easing: 'ease-out-cubic',
+            offset: 100
+        });
+    }
+
+    // 2. Logic Mobile Drawer Toggle (Vanilla JS)
+    const mobileToggle = document.getElementById('mobileToggle');
+    const mobileDrawer = document.getElementById('mobileDrawer');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const drawerCloseBtn = document.getElementById('drawerCloseBtn');
+
+    function openMobileMenu() {
+        if (mobileDrawer && mobileOverlay && mobileToggle) {
+            mobileDrawer.classList.add('active');
+            mobileOverlay.classList.add('active');
+            mobileToggle.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeMobileMenu() {
+        if (mobileDrawer && mobileOverlay && mobileToggle) {
+            mobileDrawer.classList.remove('active');
+            mobileOverlay.classList.remove('active');
+            mobileToggle.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    if (mobileToggle) mobileToggle.addEventListener('click', openMobileMenu);
+    if (mobileOverlay) mobileOverlay.addEventListener('click', closeMobileMenu);
+    if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeMobileMenu);
+
+    // 3. User Dropdown Toggle (Desktop)
     const dropdownContainer = document.getElementById('userDropdownContainer');
     const dropdownBtn = document.getElementById('userDropdownBtn');
-
     if (dropdownContainer && dropdownBtn) {
         dropdownBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             dropdownContainer.classList.toggle('active');
         });
-
         document.addEventListener('click', function(e) {
             if (!dropdownContainer.contains(e.target)) {
                 dropdownContainer.classList.remove('active');
@@ -860,44 +896,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- MOBILE DRAWER TOGGLE ---
-    const mobileToggle = document.getElementById('mobileToggle');
-    const mobileDrawer = document.getElementById('mobileDrawer');
-    const mobileOverlay = document.getElementById('mobileOverlay');
-    const drawerCloseBtn = document.getElementById('drawerCloseBtn');
+    //4. Submit Form -> Redireksi ke Booking Wizard
+    const form = document.getElementById('appointmentForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
 
-    function openMobileMenu() {
-        mobileDrawer.classList.add('active');
-        mobileOverlay.classList.add('active');
-        mobileToggle.classList.add('active');
-        document.body.style.overflow = 'hidden'; // Kunci scroll halaman
-    }
+            const name = document.getElementById('patientName').value;
+            const email = document.getElementById('patientEmail').value;
+            const phone = document.getElementById('patientPhone').value;
+            const date = document.getElementById('appointmentDate').value;
+            const service = document.getElementById('serviceSelect').value;
 
-    function closeMobileMenu() {
-        mobileDrawer.classList.remove('active');
-        mobileOverlay.classList.remove('active');
-        mobileToggle.classList.remove('active');
-        document.body.style.overflow = ''; // Lepas kunci scroll
-    }
-
-    if (mobileToggle && mobileDrawer && mobileOverlay) {
-        mobileToggle.addEventListener('click', function() {
-            if (mobileDrawer.classList.contains('active')) {
-                closeMobileMenu();
-            } else {
-                openMobileMenu();
+            if (!name || !email || !phone || !date || !service) {
+                alert('Mohon lengkapi semua kolom bertanda bintang (*) sebelum melanjutkan.');
+                return;
             }
-        });
 
-        mobileOverlay.addEventListener('click', closeMobileMenu);
-        if (drawerCloseBtn) {
-            drawerCloseBtn.addEventListener('click', closeMobileMenu);
-        }
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData).toString();
 
-        // Tutup drawer otomatis saat link diklik
-        const mobileLinks = document.querySelectorAll('.mobile-nav-item');
-        mobileLinks.forEach(link => {
-            link.addEventListener('click', closeMobileMenu);
+            // 💡 Menggunakan helper route() Laravel langsung agar URL selalu akurat
+            const targetUrl = form.getAttribute('action') || '/booking-wizard';
+
+            window.location.href = targetUrl + "?" + params;
         });
     }
 });
+
+function selectDoctorForBooking(doctorId) {
+    const doctorSelect = document.getElementById('doctorSelect');
+    if (doctorSelect) {
+        doctorSelect.value = doctorId;
+    }
+}

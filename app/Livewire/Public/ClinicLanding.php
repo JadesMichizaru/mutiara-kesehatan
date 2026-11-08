@@ -77,7 +77,7 @@ class ClinicLanding extends Component
         // Jika user / patient terautentikasi atau buat janji umum
         Appointment::create([
             'appointment_code' => $code,
-            'patient_id'       => auth()->user()?->patient?->id ?? null,
+            'patient_id'       => auth()->users()?->patient?->id ?? null,
             'doctor_id'        => $this->selectedDoctor,
             'appointment_date' => $this->appointmentDate,
             'appointment_time' => '09:00', // waktu default / disesuaikan
@@ -129,14 +129,14 @@ class ClinicLanding extends Component
         } elseif (str_contains($input, 'jadwal') || str_contains($input, 'dokter')) {
             // Query langsung ke PostgreSQL Doctor Schedule
             $today = now()->isoFormat('dddd');
-            $schedules = DoctorSchedule::with('doctor.user')->where('day_of_week', $today)->get();
+            $schedule = DoctorSchedule::with('doctor.user')->where('day_of_week', $today)->get();
 
-            if ($schedules->isEmpty()) {
+            if ($schedule->isEmpty()) {
                 return "👨‍⚕️ <strong>Dokter Praktik Hari Ini ({$today}):</strong><br>• dr. Ahmad Fauzi, Sp.PD (08:00 - 14:00)<br>• dr. Siti Nurhaliza, Sp.A (09:00 - 15:00)";
             }
 
             $text = "👨‍⚕️ <strong>Dokter Praktik Aktif Hari Ini:</strong><br>";
-            foreach ($schedules as $sch) {
+            foreach ($schedule as $sch) {
                 $text .= "• " . $sch->doctor->user->name . " (" . $sch->doctor->specialization . ") [" . substr($sch->start_time,0,5) . " - " . substr($sch->end_time,0,5) . "]<br>";
             }
             return $text;
